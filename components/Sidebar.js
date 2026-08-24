@@ -32,6 +32,9 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
   const [editandoNome, setEditandoNome] = useState(false);
   const [nomeEdit, setNomeEdit] = useState("");
   const [salvandoNome, setSalvandoNome] = useState(false);
+  const [editandoTel, setEditandoTel] = useState(false);
+  const [telEdit, setTelEdit] = useState("");
+  const [salvandoTel, setSalvandoTel] = useState(false);
 
   useEffect(() => {
     async function carregarPerfil() {
@@ -39,10 +42,11 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
       if (!user) return;
       setEmail(user.email || "");
       setUserId(user.id);
-      const { data } = await supabase.from("perfis").select("nome, foto_url").eq("user_id", user.id).single();
+      const { data } = await supabase.from("perfis").select("nome, foto_url, telefone").eq("user_id", user.id).single();
       if (data) {
         setPerfil(data);
         setNomeEdit(data.nome || "");
+        setTelEdit(data.telefone || "");
       }
     }
     carregarPerfil();
@@ -57,6 +61,19 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
     if (!error) {
       setPerfil((prev) => ({ ...(prev || {}), nome: novoNome }));
       setEditandoNome(false);
+    }
+  };
+
+  const salvarTelefone = async () => {
+    if (!userId) return;
+    setSalvandoTel(true);
+    const digitos = telEdit.replace(/[^\d]/g, "");
+    const { error } = await supabase.from("perfis").upsert({ user_id: userId, telefone: digitos || null }, { onConflict: "user_id" });
+    setSalvandoTel(false);
+    if (!error) {
+      setPerfil((prev) => ({ ...(prev || {}), telefone: digitos }));
+      setTelEdit(digitos);
+      setEditandoTel(false);
     }
   };
 
@@ -192,6 +209,27 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
               <div style={{ fontSize: 11, color: COLORS.sidebarText, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {email}
               </div>
+              {editandoTel ? (
+                <div style={{ display: "flex", gap: 4, alignItems: "center", marginTop: 3 }}>
+                  <input
+                    autoFocus
+                    placeholder="5519999999999"
+                    value={telEdit}
+                    onChange={(e) => setTelEdit(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") salvarTelefone(); if (e.key === "Escape") { setEditandoTel(false); setTelEdit(perfil?.telefone || ""); } }}
+                    style={{ width: "100%", fontSize: 11.5, padding: "3px 6px", borderRadius: 5, border: `1px solid ${COLORS.sidebarHover}`, background: COLORS.sidebar, color: COLORS.sidebarTextActive }}
+                  />
+                  <button onClick={salvarTelefone} disabled={salvandoTel} style={{ background: "none", border: "none", color: COLORS.action, cursor: "pointer", fontSize: 13, padding: 2 }} title="Salvar">✓</button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => setEditandoTel(true)}
+                  style={{ fontSize: 11, color: COLORS.sidebarText, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer", marginTop: 3 }}
+                  title="Clique para editar o WhatsApp"
+                >
+                  {perfil?.telefone ? `WhatsApp: ${perfil.telefone}` : "+ Vincular WhatsApp"} <span style={{ opacity: 0.5, fontSize: 10 }}>✎</span>
+                </div>
+              )}
             </div>
           </div>
         )}
