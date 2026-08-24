@@ -21,17 +21,37 @@ const NAV = [
 export default function Sidebar({ active, onNavigate, obraNome, open, onClose }) {
   const [perfil, setPerfil] = useState(null);
   const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState(null);
+  const [editandoNome, setEditandoNome] = useState(false);
+  const [nomeEdit, setNomeEdit] = useState("");
+  const [salvandoNome, setSalvandoNome] = useState(false);
 
   useEffect(() => {
     async function carregarPerfil() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setEmail(user.email || "");
+      setUserId(user.id);
       const { data } = await supabase.from("perfis").select("nome, foto_url").eq("user_id", user.id).single();
-      if (data) setPerfil(data);
+      if (data) {
+        setPerfil(data);
+        setNomeEdit(data.nome || "");
+      }
     }
     carregarPerfil();
   }, []);
+
+  const salvarNome = async () => {
+    if (!userId) return;
+    setSalvandoNome(true);
+    const novoNome = nomeEdit.trim();
+    const { error } = await supabase.from("perfis").upsert({ user_id: userId, nome: novoNome || null }, { onConflict: "user_id" });
+    setSalvandoNome(false);
+    if (!error) {
+      setPerfil((prev) => ({ ...(prev || {}), nome: novoNome }));
+      setEditandoNome(false);
+    }
+  };
 
   return (
     <>
@@ -48,16 +68,17 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
           background: COLORS.sidebar,
           color: COLORS.sidebarText,
           width: 240,
-          minHeight: "100vh",
+          height: "100vh",
           padding: "20px 14px",
           display: "flex",
           flexDirection: "column",
-          gap: 24,
+          gap: 0,
           position: "sticky",
           top: 0,
+          overflow: "hidden",
         }}
       >
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 24, minHeight: 0 }}>
         <div style={{ padding: "6px 10px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <svg width="20" height="22" viewBox="0 0 24 26" fill="none">
@@ -116,7 +137,7 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
         </div>
 
         {email && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px", borderTop: `1px solid ${COLORS.sidebarHover}` }}>
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 10, padding: "10px", borderTop: `1px solid ${COLORS.sidebarHover}` }}>
             <div style={{
               width: 32, height: 32, borderRadius: "50%", background: COLORS.sidebarHover, flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden"
@@ -129,10 +150,27 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
                 </span>
               )}
             </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.sidebarTextActive, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {perfil?.nome || "Usuário"}
-              </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              {editandoNome ? (
+                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                  <input
+                    autoFocus
+                    value={nomeEdit}
+                    onChange={(e) => setNomeEdit(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") salvarNome(); if (e.key === "Escape") { setEditandoNome(false); setNomeEdit(perfil?.nome || ""); } }}
+                    style={{ width: "100%", fontSize: 12.5, padding: "3px 6px", borderRadius: 5, border: `1px solid ${COLORS.sidebarHover}`, background: COLORS.sidebar, color: COLORS.sidebarTextActive }}
+                  />
+                  <button onClick={salvarNome} disabled={salvandoNome} style={{ background: "none", border: "none", color: COLORS.action, cursor: "pointer", fontSize: 13, padding: 2 }} title="Salvar">✓</button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => setEditandoNome(true)}
+                  style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.sidebarTextActive, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer" }}
+                  title="Clique para editar o nome"
+                >
+                  {perfil?.nome || "Usuário"} <span style={{ opacity: 0.5, fontSize: 10.5 }}>✎</span>
+                </div>
+              )}
               <div style={{ fontSize: 11, color: COLORS.sidebarText, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {email}
               </div>

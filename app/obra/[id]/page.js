@@ -199,7 +199,7 @@ export default function ObraDashboard() {
       )}
 
       {showEditarObra && obra && (
-        <EditarObraModal obra={obra} onClose={() => setShowEditarObra(false)} onSave={salvarEdicaoObra} />
+        <EditarObraModal obra={obra} entries={entries} onClose={() => setShowEditarObra(false)} onSave={salvarEdicaoObra} />
       )}
     </div>
   );

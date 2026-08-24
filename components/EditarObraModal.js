@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { COLORS, fmtBRL, STATUS_OBRA_LABEL } from "../lib/theme";
 
-export default function EditarObraModal({ obra, onClose, onSave }) {
+export default function EditarObraModal({ obra, entries, onClose, onSave }) {
   const [form, setForm] = useState({
     nome: obra.nome || "",
     quadra_lote: obra.quadra_lote || "",
@@ -11,20 +11,28 @@ export default function EditarObraModal({ obra, onClose, onSave }) {
     valor_venda_real: obra.valor_venda_real || "",
     comissao_percentual: obra.comissao_percentual || "",
   });
+  const [confirmaLancamentos, setConfirmaLancamentos] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
   const inputStyle = { width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 13.5, color: COLORS.text };
   const labelStyle = { fontSize: 11.5, fontWeight: 600, color: COLORS.textSoft, marginBottom: 5, display: "block" };
 
+  const totalGastoReal = (entries || []).reduce((a, e) => a + e.valor, 0);
+
   const valorVenda = Number(form.valor_venda_real) || 0;
   const pctComissao = Number(form.comissao_percentual) || 0;
   const valorComissao = valorVenda * (pctComissao / 100);
   const valorLiquido = valorVenda - valorComissao;
-  const custoTotal = Number(obra.terreno_valor || 0) + Number(obra.orcamento_total || 0);
+  // Custo real = terreno + soma de todos os lançamentos já registrados (não o orçamento previsto)
+  const custoTotal = Number(obra.terreno_valor || 0) + totalGastoReal;
   const lucro = valorLiquido - custoTotal;
+
+  const mudouParaVendida = form.status === "vendida" && obra.status !== "vendida";
+  const podeSalvar = !mudouParaVendida || confirmaLancamentos;
 
   const submit = async (e) => {
     e.preventDefault();
+    if (!podeSalvar) return;
     setSalvando(true);
     const payload = {
       nome: form.nome,
@@ -95,11 +103,23 @@ export default function EditarObraModal({ obra, onClose, onSave }) {
               <div style={{ fontSize: 12.5, color: COLORS.textSoft, lineHeight: 1.8 }}>
                 <div>Comissão: <strong style={{ color: COLORS.text }}>{fmtBRL(valorComissao)}</strong></div>
                 <div>Valor líquido: <strong style={{ color: COLORS.text }}>{fmtBRL(valorLiquido)}</strong></div>
-                <div>Custo total (terreno + obra): <strong style={{ color: COLORS.text }}>{fmtBRL(custoTotal)}</strong></div>
+                <div>Custo real (terreno + todos os lançamentos): <strong style={{ color: COLORS.text }}>{fmtBRL(custoTotal)}</strong></div>
                 <div style={{ marginTop: 6, fontSize: 14 }}>
-                  Lucro estimado: <strong style={{ color: lucro >= 0 ? COLORS.good : COLORS.bad }}>{fmtBRL(lucro)}</strong>
+                  Lucro real: <strong style={{ color: lucro >= 0 ? COLORS.good : COLORS.bad }}>{fmtBRL(lucro)}</strong>
                 </div>
               </div>
+            )}
+
+            {mudouParaVendida && (
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14, fontSize: 12.5, color: COLORS.text, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={confirmaLancamentos}
+                  onChange={(e) => setConfirmaLancamentos(e.target.checked)}
+                  style={{ marginTop: 2 }}
+                />
+                <span>Confirmo que todos os lançamentos (gastos) desta obra já foram registrados, para que o lucro real seja calculado corretamente.</span>
+              </label>
             )}
           </div>
         )}
@@ -108,7 +128,7 @@ export default function EditarObraModal({ obra, onClose, onSave }) {
           <button type="button" onClick={onClose} style={{ flex: 1, padding: 12, borderRadius: 8, border: `1px solid ${COLORS.border}`, background: "none", color: COLORS.textSoft, fontWeight: 600, cursor: "pointer" }}>
             Cancelar
           </button>
-          <button type="submit" disabled={salvando} style={{ flex: 2, padding: 12, borderRadius: 8, border: "none", background: COLORS.action, color: "#fff", fontWeight: 700, cursor: "pointer" }}>
+          <button type="submit" disabled={salvando || !podeSalvar} style={{ flex: 2, padding: 12, borderRadius: 8, border: "none", background: podeSalvar ? COLORS.action : COLORS.border, color: "#fff", fontWeight: 700, cursor: podeSalvar ? "pointer" : "not-allowed" }}>
             {salvando ? "Salvando…" : "Salvar"}
           </button>
         </div>

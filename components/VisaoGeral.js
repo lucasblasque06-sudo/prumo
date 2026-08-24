@@ -35,19 +35,35 @@ export default function VisaoGeral({ obra, stages, entries }) {
 
   const recentes = [...entries].sort((a, b) => (a.data < b.data ? 1 : -1)).slice(0, 5);
 
+  const vendida = obra?.status === "vendida";
+  const custoReal = Number(obra?.terreno_valor || 0) + totalGasto;
+  const lucroReal = vendida ? Number(obra?.lucro ?? (Number(obra?.valor_liquido || 0) - custoReal)) : 0;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
-        <StatCard label="Orçamento" value={fmtBRL(orcamentoTotal)} />
-        <StatCard
-          label="Gasto real"
-          value={fmtBRL(totalGasto)}
-          sub={`${pctUsado.toFixed(1)}% utilizado`}
-          subColor={pctUsado > 100 ? COLORS.bad : pctUsado > 85 ? COLORS.warn : COLORS.good}
-        />
-        <StatCard label="Disponível" value={fmtBRL(disponivel)} sub={disponivel < 0 ? "orçamento estourado" : "restante"} subColor={disponivel < 0 ? COLORS.bad : COLORS.good} />
-        <StatCard label="Terreno" value={fmtBRL(obra?.terreno_valor)} />
-        <StatCard label="Venda prevista" value={fmtBRL(obra?.venda_prevista)} subColor={COLORS.good} />
+        {vendida ? (
+          <>
+            <StatCard label="Valor da venda" value={fmtBRL(obra?.valor_venda_real)} subColor={COLORS.good} />
+            <StatCard label="Gasto real" value={fmtBRL(totalGasto)} />
+            <StatCard label="Terreno" value={fmtBRL(obra?.terreno_valor)} />
+            <StatCard label="Comissão" value={fmtBRL(obra?.valor_comissao)} />
+            <StatCard label="Lucro real" value={fmtBRL(lucroReal)} sub="terreno + gastos + comissão já descontados" subColor={lucroReal >= 0 ? COLORS.good : COLORS.bad} />
+          </>
+        ) : (
+          <>
+            <StatCard label="Orçamento" value={fmtBRL(orcamentoTotal)} />
+            <StatCard
+              label="Gasto real"
+              value={fmtBRL(totalGasto)}
+              sub={`${pctUsado.toFixed(1)}% utilizado`}
+              subColor={pctUsado > 100 ? COLORS.bad : pctUsado > 85 ? COLORS.warn : COLORS.good}
+            />
+            <StatCard label="Disponível" value={fmtBRL(disponivel)} sub={disponivel < 0 ? "orçamento estourado" : "restante"} subColor={disponivel < 0 ? COLORS.bad : COLORS.good} />
+            <StatCard label="Terreno" value={fmtBRL(obra?.terreno_valor)} />
+            <StatCard label="Venda prevista" value={fmtBRL(obra?.venda_prevista)} subColor={COLORS.good} />
+          </>
+        )}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 20 }} className="two-col">
