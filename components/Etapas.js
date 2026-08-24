@@ -38,7 +38,7 @@ export default function Etapas({ obra, stages, entries, onUpdatePct }) {
                     max={40}
                     value={s.pct}
                     onChange={(e) => onUpdatePct(s.id, Number(e.target.value))}
-                    style={{ width: 70 }}
+                    style={{ width: 100, minHeight: 24 }}
                   />
                   <span style={{ fontSize: 12, color: COLORS.textSoft, fontWeight: 600, width: 32 }}>{s.pct}%</span>
                 </div>

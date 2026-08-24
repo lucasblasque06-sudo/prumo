@@ -44,12 +44,12 @@ export default function EquipePage() {
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "Inter, sans-serif" }}>
-      <div style={{ borderBottom: `1px solid ${COLORS.border}`, background: COLORS.paper, padding: "18px 28px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ borderBottom: `1px solid ${COLORS.border}`, background: COLORS.paper, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontWeight: 800, fontSize: 16, color: COLORS.text }}>{empresa?.nome || "Prumo"}</div>
         <a href="/obras" style={{ fontSize: 12.5, color: COLORS.textSoft, textDecoration: "none" }}>← Voltar para obras</a>
       </div>
 
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 24px" }}>
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "28px 16px" }}>
         <div style={{ fontSize: 20, fontWeight: 800, color: COLORS.text, marginBottom: 6 }}>Equipe</div>
         <div style={{ fontSize: 13, color: COLORS.textSoft, marginBottom: 24 }}>Adicione pessoas da sua empresa ao Prumo</div>
 

@@ -92,11 +92,11 @@ export default function NovaObraPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "Inter, sans-serif" }}>
-      <div style={{ borderBottom: `1px solid ${COLORS.border}`, background: COLORS.paper, padding: "18px 28px" }}>
+      <div style={{ borderBottom: `1px solid ${COLORS.border}`, background: COLORS.paper, padding: "16px 20px" }}>
         <a href="/obras" style={{ fontSize: 12.5, color: COLORS.textSoft, textDecoration: "none" }}>← Voltar para obras</a>
       </div>
 
-      <div style={{ maxWidth: 520, margin: "0 auto", padding: "32px 24px" }}>
+      <div style={{ maxWidth: 520, margin: "0 auto", padding: "28px 16px" }}>
         <div style={{ fontSize: 20, fontWeight: 800, color: COLORS.text, marginBottom: 6 }}>Nova obra</div>
         <div style={{ fontSize: 13, color: COLORS.textSoft, marginBottom: 24 }}>As 9 etapas padrão já entram configuradas — você pode ajustar depois</div>
 

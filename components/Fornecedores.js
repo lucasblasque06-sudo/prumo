@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
 import { COLORS, fmtBRL, fmtDataLonga } from "../lib/theme";
+import useIsMobile from "../lib/useIsMobile";
 
 export default function Fornecedores({ entries }) {
   const [selecionado, setSelecionado] = useState(null);
+  const isMobile = useIsMobile();
 
   const porFornecedor = {};
   entries.forEach((e) => {
@@ -33,12 +35,12 @@ export default function Fornecedores({ entries }) {
         </div>
         <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
           {[...f.compras].sort((a, b) => (a.data < b.data ? 1 : -1)).map((c) => (
-            <div key={c.id} style={{ display: "flex", justifyContent: "space-between", padding: "13px 20px", borderBottom: `1px solid ${COLORS.border}`, fontSize: 13.5 }}>
-              <div>
+            <div key={c.id} style={{ display: "flex", justifyContent: "space-between", padding: "13px 20px", borderBottom: `1px solid ${COLORS.border}`, fontSize: 13.5, gap: 10 }}>
+              <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 600, color: COLORS.text }}>{c.desc}</div>
                 <div style={{ fontSize: 11.5, color: COLORS.textSoft }}>{fmtDataLonga(c.data)} · {c.stageName}</div>
               </div>
-              <div style={{ fontWeight: 700, color: COLORS.text }}>{fmtBRL(c.valor)}</div>
+              <div style={{ fontWeight: 700, color: COLORS.text, whiteSpace: "nowrap" }}>{fmtBRL(c.valor)}</div>
             </div>
           ))}
         </div>
@@ -54,7 +56,24 @@ export default function Fornecedores({ entries }) {
           <div style={{ fontSize: 13, color: COLORS.textSoft }}>Adicione o campo fornecedor ao lançar um gasto para começar a ver esse painel.</div>
         </div>
       )}
-      {lista.length > 0 && (
+      {lista.length > 0 && isMobile && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {lista.map((f) => (
+            <div
+              key={f.nome}
+              onClick={() => setSelecionado(f.nome)}
+              style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "14px 16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text }}>{f.nome}</div>
+                <div style={{ fontSize: 12, color: COLORS.textSoft, marginTop: 2 }}>{f.compras.length} {f.compras.length === 1 ? "compra" : "compras"}</div>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 14.5, color: COLORS.text, whiteSpace: "nowrap" }}>{fmtBRL(f.total)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {lista.length > 0 && !isMobile && (
         <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", padding: "12px 20px", borderBottom: `1px solid ${COLORS.border}`, background: "#FBFBFA" }}>
             {["Fornecedor", "Compras", "Total"].map((h, i) => (

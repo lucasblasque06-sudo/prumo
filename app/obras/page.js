@@ -62,7 +62,7 @@ export default function ObrasPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "Inter, sans-serif" }}>
-      <div style={{ borderBottom: `1px solid ${COLORS.border}`, background: COLORS.paper, padding: "18px 28px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ borderBottom: `1px solid ${COLORS.border}`, background: COLORS.paper, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <svg width="20" height="22" viewBox="0 0 24 26" fill="none">
             <line x1="12" y1="2" x2="12" y2="11" stroke={COLORS.text} strokeWidth="2" />
@@ -80,7 +80,7 @@ export default function ObrasPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "32px 24px" }}>
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "28px 16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, flexWrap: "wrap", gap: 10 }}>
           <div>
             <div style={{ fontSize: 20, fontWeight: 800, color: COLORS.text, marginBottom: 6 }}>Suas obras</div>

@@ -145,15 +145,19 @@ export default function ObraDashboard() {
         input, select { font-family: inherit; }
         input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-runnable-track { height: 4px; background: ${COLORS.border}; border-radius: 2px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: ${COLORS.action}; cursor: pointer; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; border-radius: 50%; background: ${COLORS.action}; cursor: pointer; }
         .sidebar-item:hover { background: ${COLORS.sidebarHover} !important; }
         .hover-row:hover { background: #FBFBFA; }
+        .page-content { padding: 24px 28px 60px; }
         @media (max-width: 860px) {
           .sidebar { position: fixed !important; left: 0; top: 0; z-index: 50; transform: translateX(-100%); transition: transform 0.2s ease; }
           .sidebar.open { transform: translateX(0); }
           .sidebar-overlay { display: block !important; }
           .menu-btn { display: block !important; }
           .two-col { grid-template-columns: 1fr !important; }
+          .app-header { padding: 14px 16px !important; }
+          .novo-lancamento-btn { padding: 9px 12px !important; font-size: 12.5px !important; }
+          .page-content { padding: 16px 16px 80px !important; }
         }
       `}</style>
 
@@ -162,7 +166,7 @@ export default function ObraDashboard() {
       <div style={{ flex: 1, minWidth: 0 }}>
         <Header onNovoLancamento={() => setShowModal(true)} onMenuClick={() => setSidebarOpen(true)} subtitulo={obra?.endereco || ""} obraNome={obra ? `${obra.nome}${obra.quadra_lote ? ` - ${obra.quadra_lote}` : ""}` : ""} />
 
-        <div style={{ padding: "24px 28px 60px" }}>
+        <div className="page-content">
           <a href="/obras" style={{ fontSize: 12.5, color: COLORS.textSoft, textDecoration: "none", display: "inline-block", marginBottom: 10 }}>← Todas as obras</a>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
             <div style={{ fontSize: 20, fontWeight: 800, color: COLORS.text }}>{PAGE_TITLES[page]}</div>
