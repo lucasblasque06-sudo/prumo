@@ -28,14 +28,14 @@ export default function EquipePage() {
     e.preventDefault();
     setMensagem(null);
     setEnviando(true);
-    const { data, error } = await supabase.rpc("vincular_usuario_por_email", { email_alvo: emailNovo });
+    const { data, error } = await supabase.rpc("convidar_por_email", { email_alvo: emailNovo });
     setEnviando(false);
     if (error) {
       setMensagem({ tipo: "erro", texto: "Não foi possível processar. Tente novamente." });
       return;
     }
-    setMensagem({ tipo: data?.includes("sucesso") ? "ok" : "erro", texto: data });
-    if (data?.includes("sucesso")) setEmailNovo("");
+    setMensagem({ tipo: (data?.includes("sucesso") || data?.includes("adicionado") || data?.includes("Convite criado")) ? "ok" : "erro", texto: data });
+    if (data?.includes("adicionado") || data?.includes("Convite criado")) setEmailNovo("");
   };
 
   if (loading) {
@@ -54,9 +54,9 @@ export default function EquipePage() {
         <div style={{ fontSize: 13, color: COLORS.textSoft, marginBottom: 24 }}>Adicione pessoas da sua empresa ao Prumo</div>
 
         <form onSubmit={adicionar} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 22, marginBottom: 20 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>Adicionar por e-mail</div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>Convidar por e-mail</div>
           <div style={{ fontSize: 12, color: COLORS.textSoft, marginBottom: 14 }}>
-            A pessoa precisa ter criado uma conta antes em <a href="/cadastro" style={{ color: COLORS.action }}>/cadastro</a>
+            Se a pessoa já tem conta, ela é adicionada na hora. Se ainda não tem, fica um convite pendente — assim que ela criar a conta em <a href="/cadastro" style={{ color: COLORS.action }}>/cadastro</a> com esse mesmo e-mail, entra automaticamente na equipe.
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <input

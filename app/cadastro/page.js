@@ -11,6 +11,7 @@ export default function CadastroPage() {
   const [fotoPreview, setFotoPreview] = useState(null);
   const [erro, setErro] = useState(null);
   const [sucesso, setSucesso] = useState(false);
+  const [conviteAceito, setConviteAceito] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
   const escolherFoto = (e) => {
@@ -47,6 +48,14 @@ export default function CadastroPage() {
       await supabase.from("perfis").insert({ user_id: userId, nome: nome || null, foto_url: fotoUrl });
     }
 
+    // Se havia um convite pendente para este e-mail, vincula automaticamente à empresa
+    if (data.session) {
+      const { data: resultadoConvite } = await supabase.rpc("aceitar_convite_pendente");
+      if (resultadoConvite?.includes("aceito")) {
+        setConviteAceito(true);
+      }
+    }
+
     setCarregando(false);
     setSucesso(true);
   };
@@ -56,9 +65,15 @@ export default function CadastroPage() {
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.bg, fontFamily: "Inter, sans-serif", padding: 16 }}>
         <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 32, maxWidth: 380, textAlign: "center" }}>
           <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.text, marginBottom: 8 }}>Conta criada!</div>
-          <div style={{ fontSize: 13.5, color: COLORS.textSoft, lineHeight: 1.5 }}>
-            Agora peça para quem já usa o Prumo na sua empresa adicionar o e-mail <strong>{email}</strong> na tela de Equipe. Depois disso você já pode entrar normalmente.
-          </div>
+          {conviteAceito ? (
+            <div style={{ fontSize: 13.5, color: COLORS.textSoft, lineHeight: 1.5 }}>
+              Você já foi adicionado à equipe automaticamente. Pode entrar agora mesmo.
+            </div>
+          ) : (
+            <div style={{ fontSize: 13.5, color: COLORS.textSoft, lineHeight: 1.5 }}>
+              Agora peça para quem já usa o Prumo na sua empresa te adicionar na tela de Equipe usando o e-mail <strong>{email}</strong>. Depois disso você já pode entrar normalmente.
+            </div>
+          )}
           <a href="/login" style={{ display: "inline-block", marginTop: 20, color: COLORS.action, fontWeight: 700, fontSize: 13.5, textDecoration: "none" }}>Ir para o login →</a>
         </div>
       </div>
