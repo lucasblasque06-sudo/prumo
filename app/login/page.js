@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { COLORS } from "../../lib/theme";
+import { COLORS, CARD_SHADOW } from "../../lib/theme";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -23,8 +23,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.bg, fontFamily: "Inter, sans-serif" }}>
-      <form onSubmit={entrar} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 32, width: "100%", maxWidth: 380 }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.bg, fontFamily: "'Manrope', system-ui, sans-serif" }}>
+      <form onSubmit={entrar} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, width: "100%", maxWidth: 380, boxShadow: CARD_SHADOW }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
           <svg width="22" height="24" viewBox="0 0 24 26" fill="none">
             <line x1="12" y1="2" x2="12" y2="11" stroke={COLORS.text} strokeWidth="2" />

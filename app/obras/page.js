@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { COLORS, fmtBRL, STATUS_OBRA_LABEL } from "../../lib/theme";
+import { COLORS, fmtBRL, STATUS_OBRA_LABEL, CARD_SHADOW, FONT_MONO } from "../../lib/theme";
 
 export default function ObrasPage() {
   const [loading, setLoading] = useState(true);
@@ -54,14 +54,14 @@ export default function ObrasPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textSoft, fontFamily: "Inter, sans-serif" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textSoft, fontFamily: "'Manrope', system-ui, sans-serif" }}>
         Carregando…
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "Inter, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "'Manrope', system-ui, sans-serif" }}>
       <div style={{ borderBottom: `1px solid ${COLORS.border}`, background: COLORS.paper, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <svg width="20" height="22" viewBox="0 0 24 26" fill="none">
@@ -108,7 +108,7 @@ export default function ObrasPage() {
               <a
                 key={o.id}
                 href={`/obra/${o.id}`}
-                style={{ display: "block", background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "18px 22px", textDecoration: "none" }}
+                style={{ display: "block", background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "18px 22px", textDecoration: "none", boxShadow: CARD_SHADOW, transition: "border-color 0.15s ease" }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
@@ -119,7 +119,7 @@ export default function ObrasPage() {
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontSize: 11.5, color: st.color, fontWeight: 600 }}>{st.dot} {st.label}</div>
-                    <div style={{ fontSize: 12.5, color: COLORS.textSoft, marginTop: 4 }}>
+                    <div style={{ fontSize: 12.5, color: COLORS.textSoft, marginTop: 4, fontFamily: FONT_MONO }}>
                       {o.status === "vendida"
                         ? `Venda: ${fmtBRL(o.valor_venda_real)}`
                         : `Orçamento: ${fmtBRL(o.orcamento_total)}`}

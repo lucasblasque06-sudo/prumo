@@ -131,14 +131,14 @@ export default function ObraDashboard() {
 
   if (loading) {
     return (
-      <div style={{ background: COLORS.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Inter, sans-serif", color: COLORS.textSoft }}>
+      <div style={{ background: COLORS.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Manrope', system-ui, sans-serif", color: COLORS.textSoft }}>
         Carregando dados da obra…
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg, fontFamily: "Inter, sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg, fontFamily: "'Manrope', system-ui, sans-serif" }}>
       <style>{`
         * { box-sizing: border-box; }
         button { font-family: inherit; }

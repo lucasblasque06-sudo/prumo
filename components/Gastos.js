@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { COLORS, fmtBRL, fmtDataLonga, CATEGORIA_LABEL } from "../lib/theme";
+import { COLORS, fmtBRL, fmtDataLonga, CATEGORIA_LABEL, CARD_SHADOW, FONT_MONO } from "../lib/theme";
 import useIsMobile from "../lib/useIsMobile";
 
 export default function Gastos({ entries, stages }) {
@@ -53,10 +53,10 @@ export default function Gastos({ entries, stages }) {
       {filtrados.length > 0 && isMobile && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {filtrados.map((e) => (
-            <div key={e.id} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "14px 16px" }}>
+            <div key={e.id} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "14px 16px", boxShadow: CARD_SHADOW }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text }}>{e.desc}</div>
-                <div style={{ fontWeight: 700, fontSize: 14.5, color: COLORS.text, whiteSpace: "nowrap" }}>{fmtBRL(e.valor)}</div>
+                <div style={{ fontWeight: 700, fontSize: 14.5, color: COLORS.text, whiteSpace: "nowrap", fontFamily: FONT_MONO }}>{fmtBRL(e.valor)}</div>
               </div>
               <div style={{ fontSize: 12, color: COLORS.textSoft, marginTop: 6 }}>{fmtDataLonga(e.data)} · {e.stageName}</div>
               <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
@@ -71,15 +71,15 @@ export default function Gastos({ entries, stages }) {
               </div>
             </div>
           ))}
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "14px 16px", fontSize: 14, fontWeight: 700, color: COLORS.text, background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "14px 16px", fontSize: 14, fontWeight: 700, color: COLORS.text, background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, boxShadow: CARD_SHADOW }}>
             <span>Total</span>
-            <span>{fmtBRL(total)}</span>
+            <span style={{ fontFamily: FONT_MONO }}>{fmtBRL(total)}</span>
           </div>
         </div>
       )}
 
       {filtrados.length > 0 && !isMobile && (
-        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
+        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, overflow: "hidden", boxShadow: CARD_SHADOW }}>
           <div style={{ display: "grid", gridTemplateColumns: "90px 1.6fr 1fr 1fr 1fr 100px", padding: "12px 20px", borderBottom: `1px solid ${COLORS.border}`, background: "#FBFBFA" }}>
             {["Data", "Descrição", "Etapa", "Categoria", "Fornecedor", "Valor"].map((h, i) => (
               <div key={h} style={{ fontSize: 11, fontWeight: 700, color: COLORS.textSoft, textTransform: "uppercase", textAlign: i === 5 ? "right" : "left" }}>{h}</div>
@@ -92,7 +92,7 @@ export default function Gastos({ entries, stages }) {
               <div style={{ color: COLORS.textSoft }}>{e.stageName}</div>
               <div style={{ color: COLORS.textSoft }}>{CATEGORIA_LABEL[e.categoria] || e.categoria}</div>
               <div style={{ color: COLORS.textSoft }}>{e.fornecedor || "—"}</div>
-              <div style={{ textAlign: "right", fontWeight: 700, color: COLORS.text }}>{fmtBRL(e.valor)}</div>
+              <div style={{ textAlign: "right", fontWeight: 700, color: COLORS.text, fontFamily: FONT_MONO }}>{fmtBRL(e.valor)}</div>
             </div>
           ))}
           <div style={{ display: "flex", justifyContent: "flex-end", padding: "14px 20px", fontSize: 13.5, fontWeight: 700, color: COLORS.text, background: "#FBFBFA" }}>

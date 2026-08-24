@@ -1,23 +1,23 @@
 "use client";
-import { COLORS, fmtBRL, fmtDataCurta, CATEGORIA_LABEL, statusEtapa } from "../lib/theme";
+import { COLORS, fmtBRL, fmtDataCurta, CATEGORIA_LABEL, statusEtapa, CARD_SHADOW, FONT_MONO } from "../lib/theme";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
 } from "recharts";
 
 const CATEGORIA_CORES = {
-  material: "#D66A18",
-  mao_de_obra: "#23845B",
-  equipamento: "#2E6E9E",
-  taxas: "#D59B25",
-  outros: "#8A7CA8",
+  material: "#6B2FD6",
+  mao_de_obra: "#A780F0",
+  equipamento: "#241A38",
+  taxas: "#C9871F",
+  outros: "#C4BAD9",
 };
 
 function StatCard({ label, value, sub, subColor }) {
   return (
-    <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "18px 20px" }}>
-      <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textSoft, textTransform: "uppercase", letterSpacing: 0.4 }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 800, color: COLORS.text, marginTop: 6 }}>{value}</div>
+    <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "18px 20px", boxShadow: CARD_SHADOW }}>
+      <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textSoft, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</div>
+      <div style={{ fontSize: 23, fontWeight: 700, color: COLORS.text, marginTop: 6, fontFamily: FONT_MONO, letterSpacing: -0.5 }}>{value}</div>
       {sub && <div style={{ fontSize: 12, color: subColor || COLORS.textSoft, marginTop: 4, fontWeight: 600 }}>{sub}</div>}
     </div>
   );
@@ -103,7 +103,7 @@ export default function VisaoGeral({ obra, stages, entries }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20 }} className="two-col">
-        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 22 }}>
+        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 22, boxShadow: CARD_SHADOW }}>
           <div style={{ fontSize: 14.5, fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>Orçado x Gasto por etapa</div>
           <div style={{ fontSize: 12, color: COLORS.textSoft, marginBottom: 16 }}>As 6 etapas com mais movimento</div>
           {dadosEtapas.length === 0 ? (
@@ -123,7 +123,7 @@ export default function VisaoGeral({ obra, stages, entries }) {
           )}
         </div>
 
-        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 22 }}>
+        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 22, boxShadow: CARD_SHADOW }}>
           <div style={{ fontSize: 14.5, fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>Para onde está indo o dinheiro</div>
           <div style={{ fontSize: 12, color: COLORS.textSoft, marginBottom: 16 }}>Por categoria</div>
           {dadosPizza.length === 0 ? (
@@ -156,7 +156,7 @@ export default function VisaoGeral({ obra, stages, entries }) {
         </div>
       </div>
 
-      <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 22 }}>
+      <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 22, boxShadow: CARD_SHADOW }}>
         <div style={{ fontSize: 14.5, fontWeight: 700, color: COLORS.text, marginBottom: 16 }}>Lançamentos recentes</div>
         {recentes.length === 0 && <div style={{ fontSize: 13, color: COLORS.textSoft }}>Nenhum lançamento ainda. Registre o primeiro gasto para começar.</div>}
         {recentes.map((e) => (

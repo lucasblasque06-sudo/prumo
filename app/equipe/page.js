@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { COLORS } from "../../lib/theme";
+import { COLORS, CARD_SHADOW } from "../../lib/theme";
 
 export default function EquipePage() {
   const [empresa, setEmpresa] = useState(null);
@@ -39,11 +39,11 @@ export default function EquipePage() {
   };
 
   if (loading) {
-    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textSoft, fontFamily: "Inter, sans-serif" }}>Carregando…</div>;
+    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textSoft, fontFamily: "'Manrope', system-ui, sans-serif" }}>Carregando…</div>;
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "Inter, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "'Manrope', system-ui, sans-serif" }}>
       <div style={{ borderBottom: `1px solid ${COLORS.border}`, background: COLORS.paper, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontWeight: 800, fontSize: 16, color: COLORS.text }}>{empresa?.nome || "Prumo"}</div>
         <a href="/obras" style={{ fontSize: 12.5, color: COLORS.textSoft, textDecoration: "none" }}>← Voltar para obras</a>
@@ -53,7 +53,7 @@ export default function EquipePage() {
         <div style={{ fontSize: 20, fontWeight: 800, color: COLORS.text, marginBottom: 6 }}>Equipe</div>
         <div style={{ fontSize: 13, color: COLORS.textSoft, marginBottom: 24 }}>Adicione pessoas da sua empresa ao Prumo</div>
 
-        <form onSubmit={adicionar} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 22, marginBottom: 20 }}>
+        <form onSubmit={adicionar} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 22, marginBottom: 20, boxShadow: CARD_SHADOW }}>
           <div style={{ fontSize: 13.5, fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>Convidar por e-mail</div>
           <div style={{ fontSize: 12, color: COLORS.textSoft, marginBottom: 14 }}>
             Se a pessoa já tem conta, ela é adicionada na hora. Se ainda não tem, fica um convite pendente — assim que ela criar a conta em <a href="/cadastro" style={{ color: COLORS.action }}>/cadastro</a> com esse mesmo e-mail, entra automaticamente na equipe.

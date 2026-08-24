@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { COLORS } from "../../lib/theme";
+import { COLORS, CARD_SHADOW } from "../../lib/theme";
 
 export default function CadastroPage() {
   const [nome, setNome] = useState("");
@@ -62,8 +62,8 @@ export default function CadastroPage() {
 
   if (sucesso) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.bg, fontFamily: "Inter, sans-serif", padding: 16 }}>
-        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 32, maxWidth: 380, textAlign: "center" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.bg, fontFamily: "'Manrope', system-ui, sans-serif", padding: 16 }}>
+        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, maxWidth: 380, textAlign: "center", boxShadow: CARD_SHADOW }}>
           <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.text, marginBottom: 8 }}>Conta criada!</div>
           {conviteAceito ? (
             <div style={{ fontSize: 13.5, color: COLORS.textSoft, lineHeight: 1.5 }}>
@@ -81,8 +81,8 @@ export default function CadastroPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.bg, fontFamily: "Inter, sans-serif" }}>
-      <form onSubmit={cadastrar} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 32, width: "100%", maxWidth: 380 }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.bg, fontFamily: "'Manrope', system-ui, sans-serif" }}>
+      <form onSubmit={cadastrar} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, width: "100%", maxWidth: 380, boxShadow: CARD_SHADOW }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
           <svg width="22" height="24" viewBox="0 0 24 26" fill="none">
             <line x1="12" y1="2" x2="12" y2="11" stroke={COLORS.text} strokeWidth="2" />

@@ -1,5 +1,5 @@
 "use client";
-import { COLORS, fmtBRL, statusEtapa } from "../lib/theme";
+import { COLORS, fmtBRL, statusEtapa, CARD_SHADOW, FONT_MONO } from "../lib/theme";
 
 export default function Etapas({ obra, stages, entries, onUpdatePct }) {
   const orcamentoTotal = Number(obra?.orcamento_total || 0);
@@ -25,7 +25,7 @@ export default function Etapas({ obra, stages, entries, onUpdatePct }) {
         {linhas.map((s) => {
           const st = statusEtapa(s.pu);
           return (
-            <div key={s.id} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "16px 20px" }}>
+            <div key={s.id} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "16px 20px", boxShadow: CARD_SHADOW }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14.5, color: COLORS.text }}>{s.nome}</div>
@@ -51,11 +51,11 @@ export default function Etapas({ obra, stages, entries, onUpdatePct }) {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, fontSize: 12.5 }}>
                 <div>
                   <div style={{ color: COLORS.textSoft }}>Orçado</div>
-                  <div style={{ fontWeight: 700, color: COLORS.text }}>{fmtBRL(s.orcado)}</div>
+                  <div style={{ fontWeight: 700, color: COLORS.text, fontFamily: FONT_MONO }}>{fmtBRL(s.orcado)}</div>
                 </div>
                 <div>
                   <div style={{ color: COLORS.textSoft }}>Gasto</div>
-                  <div style={{ fontWeight: 700, color: COLORS.text }}>{s.gasto > 0 ? fmtBRL(s.gasto) : "Nenhum gasto registrado"}</div>
+                  <div style={{ fontWeight: 700, color: COLORS.text, fontFamily: s.gasto > 0 ? FONT_MONO : "inherit" }}>{s.gasto > 0 ? fmtBRL(s.gasto) : "Nenhum gasto registrado"}</div>
                 </div>
                 <div>
                   <div style={{ color: COLORS.textSoft }}>% utilizado</div>

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { COLORS, fmtBRL, fmtDataLonga } from "../lib/theme";
+import { COLORS, fmtBRL, fmtDataLonga, CARD_SHADOW, FONT_MONO } from "../lib/theme";
 import useIsMobile from "../lib/useIsMobile";
 
 export default function Fornecedores({ entries }) {
@@ -51,7 +51,7 @@ export default function Fornecedores({ entries }) {
   return (
     <div>
       {lista.length === 0 && (
-        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 40, textAlign: "center" }}>
+        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 40, textAlign: "center", boxShadow: CARD_SHADOW }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.text, marginBottom: 6 }}>Nenhum fornecedor registrado ainda</div>
           <div style={{ fontSize: 13, color: COLORS.textSoft }}>Adicione o campo fornecedor ao lançar um gasto para começar a ver esse painel.</div>
         </div>
@@ -62,19 +62,19 @@ export default function Fornecedores({ entries }) {
             <div
               key={f.nome}
               onClick={() => setSelecionado(f.nome)}
-              style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "14px 16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
+              style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "14px 16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, boxShadow: CARD_SHADOW }}
             >
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text }}>{f.nome}</div>
                 <div style={{ fontSize: 12, color: COLORS.textSoft, marginTop: 2 }}>{f.compras.length} {f.compras.length === 1 ? "compra" : "compras"}</div>
               </div>
-              <div style={{ fontWeight: 700, fontSize: 14.5, color: COLORS.text, whiteSpace: "nowrap" }}>{fmtBRL(f.total)}</div>
+              <div style={{ fontWeight: 700, fontSize: 14.5, color: COLORS.text, whiteSpace: "nowrap", fontFamily: FONT_MONO }}>{fmtBRL(f.total)}</div>
             </div>
           ))}
         </div>
       )}
       {lista.length > 0 && !isMobile && (
-        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
+        <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, overflow: "hidden", boxShadow: CARD_SHADOW }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", padding: "12px 20px", borderBottom: `1px solid ${COLORS.border}`, background: "#FBFBFA" }}>
             {["Fornecedor", "Compras", "Total"].map((h, i) => (
               <div key={h} style={{ fontSize: 11, fontWeight: 700, color: COLORS.textSoft, textTransform: "uppercase", textAlign: i === 2 ? "right" : "left" }}>{h}</div>
@@ -89,7 +89,7 @@ export default function Fornecedores({ entries }) {
             >
               <div style={{ fontWeight: 600, fontSize: 13.5, color: COLORS.text }}>{f.nome}</div>
               <div style={{ fontSize: 13, color: COLORS.textSoft }}>{f.compras.length}</div>
-              <div style={{ textAlign: "right", fontWeight: 700, fontSize: 13.5, color: COLORS.text }}>{fmtBRL(f.total)}</div>
+              <div style={{ textAlign: "right", fontWeight: 700, fontSize: 13.5, color: COLORS.text, fontFamily: FONT_MONO }}>{fmtBRL(f.total)}</div>
             </div>
           ))}
         </div>

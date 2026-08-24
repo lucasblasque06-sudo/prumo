@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { COLORS, fmtBRL, STATUS_OBRA_LABEL } from "../lib/theme";
+import { COLORS, fmtBRL, STATUS_OBRA_LABEL, CARD_SHADOW, FONT_MONO } from "../lib/theme";
 
 export default function EditarObraModal({ obra, entries, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -60,7 +60,7 @@ export default function EditarObraModal({ obra, entries, onClose, onSave }) {
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        style={{ background: COLORS.paper, borderRadius: 14, padding: 28, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto" }}
+        style={{ background: COLORS.paper, borderRadius: 18, padding: 28, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 24px 64px -12px rgba(24,17,35,0.28)" }}
       >
         <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.text, marginBottom: 20 }}>Editar obra</div>
 
@@ -101,11 +101,11 @@ export default function EditarObraModal({ obra, entries, onClose, onSave }) {
             </div>
             {valorVenda > 0 && (
               <div style={{ fontSize: 12.5, color: COLORS.textSoft, lineHeight: 1.8 }}>
-                <div>Comissão: <strong style={{ color: COLORS.text }}>{fmtBRL(valorComissao)}</strong></div>
-                <div>Valor líquido: <strong style={{ color: COLORS.text }}>{fmtBRL(valorLiquido)}</strong></div>
-                <div>Custo real (terreno + todos os lançamentos): <strong style={{ color: COLORS.text }}>{fmtBRL(custoTotal)}</strong></div>
+                <div>Comissão: <strong style={{ color: COLORS.text, fontFamily: FONT_MONO }}>{fmtBRL(valorComissao)}</strong></div>
+                <div>Valor líquido: <strong style={{ color: COLORS.text, fontFamily: FONT_MONO }}>{fmtBRL(valorLiquido)}</strong></div>
+                <div>Custo real (terreno + todos os lançamentos): <strong style={{ color: COLORS.text, fontFamily: FONT_MONO }}>{fmtBRL(custoTotal)}</strong></div>
                 <div style={{ marginTop: 6, fontSize: 14 }}>
-                  Lucro real: <strong style={{ color: lucro >= 0 ? COLORS.good : COLORS.bad }}>{fmtBRL(lucro)}</strong>
+                  Lucro real: <strong style={{ color: lucro >= 0 ? COLORS.good : COLORS.bad, fontFamily: FONT_MONO }}>{fmtBRL(lucro)}</strong>
                 </div>
               </div>
             )}

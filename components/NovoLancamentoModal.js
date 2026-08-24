@@ -40,7 +40,7 @@ export default function NovoLancamentoModal({ stages, onClose, onSave }) {
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        style={{ background: COLORS.paper, borderRadius: 14, padding: 28, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto" }}
+        style={{ background: COLORS.paper, borderRadius: 18, padding: 28, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 24px 64px -12px rgba(24,17,35,0.28)" }}
       >
         <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.text, marginBottom: 4 }}>Novo lançamento</div>
         <div style={{ fontSize: 12.5, color: COLORS.textSoft, marginBottom: 20 }}>Registre um gasto da obra</div>

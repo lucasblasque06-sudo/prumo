@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { COLORS } from "../../lib/theme";
+import { COLORS, CARD_SHADOW } from "../../lib/theme";
 
 const ETAPAS_PADRAO = [
   { nome: "Terraplanagem / Fundação", pct: 8, ordem: 1 },
@@ -85,14 +85,14 @@ export default function NovaObraPage() {
   };
 
   if (loading) {
-    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textSoft, fontFamily: "Inter, sans-serif" }}>Carregando…</div>;
+    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textSoft, fontFamily: "'Manrope', system-ui, sans-serif" }}>Carregando…</div>;
   }
 
   const inputStyle = { width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 13.5 };
   const labelStyle = { fontSize: 11.5, fontWeight: 600, color: COLORS.textSoft, marginBottom: 5, display: "block" };
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "Inter, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "'Manrope', system-ui, sans-serif" }}>
       <div style={{ borderBottom: `1px solid ${COLORS.border}`, background: COLORS.paper, padding: "16px 20px" }}>
         <a href="/obras" style={{ fontSize: 12.5, color: COLORS.textSoft, textDecoration: "none" }}>← Voltar para obras</a>
       </div>
@@ -101,7 +101,7 @@ export default function NovaObraPage() {
         <div style={{ fontSize: 20, fontWeight: 800, color: COLORS.text, marginBottom: 6 }}>Nova obra</div>
         <div style={{ fontSize: 13, color: COLORS.textSoft, marginBottom: 24 }}>As 9 etapas padrão já entram configuradas — você pode ajustar depois</div>
 
-        <form onSubmit={salvar} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 24 }}>
+        <form onSubmit={salvar} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 24, boxShadow: CARD_SHADOW }}>
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>Nome da obra</label>
             <input required placeholder="Ex: Casa João Silva" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} style={inputStyle} />
