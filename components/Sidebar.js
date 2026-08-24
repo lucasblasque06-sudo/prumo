@@ -16,6 +16,13 @@ const NAV = [
       { id: "fornecedores", label: "Fornecedores", icon: "▤" },
     ],
   },
+  {
+    section: "EMPRESA",
+    items: [
+      { id: "trocar-obra", label: "Trocar obra", icon: "⇄", href: "/obras" },
+      { id: "equipe", label: "Equipe", icon: "◍", href: "/equipe" },
+    ],
+  },
 ];
 
 export default function Sidebar({ active, onNavigate, obraNome, open, onClose }) {
@@ -104,27 +111,38 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
             </div>
             {group.items.map((item) => {
               const isActive = active === item.id;
+              const baseStyle = {
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                width: "100%",
+                textAlign: "left",
+                padding: "9px 10px",
+                borderRadius: 8,
+                border: "none",
+                background: isActive ? COLORS.sidebarHover : "transparent",
+                color: isActive ? COLORS.sidebarTextActive : COLORS.sidebarText,
+                fontSize: 13.5,
+                fontWeight: isActive ? 600 : 500,
+                cursor: "pointer",
+                marginBottom: 2,
+                transition: "background 0.15s ease, color 0.15s ease",
+                textDecoration: "none",
+                boxSizing: "border-box",
+              };
+              if (item.href) {
+                return (
+                  <a key={item.id} href={item.href} style={baseStyle} className="sidebar-item">
+                    <span style={{ fontSize: 13, opacity: 0.85 }}>{item.icon}</span>
+                    {item.label}
+                  </a>
+                );
+              }
               return (
                 <button
                   key={item.id}
                   onClick={() => onNavigate(item.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    width: "100%",
-                    textAlign: "left",
-                    padding: "9px 10px",
-                    borderRadius: 8,
-                    border: "none",
-                    background: isActive ? COLORS.sidebarHover : "transparent",
-                    color: isActive ? COLORS.sidebarTextActive : COLORS.sidebarText,
-                    fontSize: 13.5,
-                    fontWeight: isActive ? 600 : 500,
-                    cursor: "pointer",
-                    marginBottom: 2,
-                    transition: "background 0.15s ease, color 0.15s ease",
-                  }}
+                  style={baseStyle}
                   className="sidebar-item"
                 >
                   <span style={{ fontSize: 13, opacity: 0.85 }}>{item.icon}</span>

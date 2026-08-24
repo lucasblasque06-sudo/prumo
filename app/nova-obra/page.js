@@ -4,15 +4,16 @@ import { supabase } from "../../lib/supabase";
 import { COLORS } from "../../lib/theme";
 
 const ETAPAS_PADRAO = [
-  { nome: "Terraplanagem / Fundação", pct: 9, ordem: 1 },
-  { nome: "Estrutura (alvenaria/laje)", pct: 19, ordem: 2 },
-  { nome: "Instalações (elétrica/hidráulica)", pct: 13, ordem: 3 },
-  { nome: "Esquadrias (portas/janelas)", pct: 9, ordem: 4 },
-  { nome: "Revestimentos / Acabamento", pct: 22, ordem: 5 },
-  { nome: "Pintura", pct: 4, ordem: 6 },
-  { nome: "Área externa / Paisagismo", pct: 6, ordem: 7 },
-  { nome: "Documentação / Taxas / Projetos", pct: 4, ordem: 8 },
-  { nome: "Imprevistos (reserva)", pct: 10, ordem: 9 },
+  { nome: "Terraplanagem / Fundação", pct: 8, ordem: 1 },
+  { nome: "Estrutura (alvenaria/laje)", pct: 18, ordem: 2 },
+  { nome: "Cobertura / Telhado", pct: 8, ordem: 3 },
+  { nome: "Instalações (elétrica/hidráulica)", pct: 12, ordem: 4 },
+  { nome: "Esquadrias (portas/janelas)", pct: 8, ordem: 5 },
+  { nome: "Revestimentos / Acabamento", pct: 20, ordem: 6 },
+  { nome: "Pintura", pct: 4, ordem: 7 },
+  { nome: "Área externa / Paisagismo", pct: 6, ordem: 8 },
+  { nome: "Documentação / Taxas / Projetos", pct: 4, ordem: 9 },
+  { nome: "Imprevistos (reserva)", pct: 12, ordem: 10 },
 ];
 
 export default function NovaObraPage() {

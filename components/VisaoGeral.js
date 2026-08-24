@@ -1,5 +1,17 @@
 "use client";
 import { COLORS, fmtBRL, fmtDataCurta, CATEGORIA_LABEL, statusEtapa } from "../lib/theme";
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
+} from "recharts";
+
+const CATEGORIA_CORES = {
+  material: "#D66A18",
+  mao_de_obra: "#23845B",
+  equipamento: "#2E6E9E",
+  taxas: "#D59B25",
+  outros: "#8A7CA8",
+};
 
 function StatCard({ label, value, sub, subColor }) {
   return (
@@ -7,6 +19,29 @@ function StatCard({ label, value, sub, subColor }) {
       <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textSoft, textTransform: "uppercase", letterSpacing: 0.4 }}>{label}</div>
       <div style={{ fontSize: 24, fontWeight: 800, color: COLORS.text, marginTop: 6 }}>{value}</div>
       {sub && <div style={{ fontSize: 12, color: subColor || COLORS.textSoft, marginTop: 4, fontWeight: 600 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function TooltipCategoria({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 12.5, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+      <div style={{ fontWeight: 700, color: COLORS.text }}>{d.name}</div>
+      <div style={{ color: COLORS.textSoft }}>{fmtBRL(d.value)} ({d.pct.toFixed(1)}%)</div>
+    </div>
+  );
+}
+
+function TooltipEtapas({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 12.5, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+      <div style={{ fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>{label}</div>
+      {payload.map((p) => (
+        <div key={p.dataKey} style={{ color: p.color }}>{p.name}: {fmtBRL(p.value)}</div>
+      ))}
     </div>
   );
 }
@@ -21,17 +56,18 @@ export default function VisaoGeral({ obra, stages, entries }) {
   entries.forEach((e) => {
     porCategoria[e.categoria] = (porCategoria[e.categoria] || 0) + e.valor;
   });
-  const categoriasOrdenadas = Object.entries(porCategoria).sort((a, b) => b[1] - a[1]);
+  const dadosPizza = Object.entries(porCategoria)
+    .map(([cat, val]) => ({ name: CATEGORIA_LABEL[cat] || cat, value: val, pct: totalGasto > 0 ? (val / totalGasto) * 100 : 0, cor: CATEGORIA_CORES[cat] || COLORS.textSoft }))
+    .sort((a, b) => b.value - a.value);
 
-  const etapasComGasto = stages
+  const dadosEtapas = stages
     .map((s) => {
       const gasto = entries.filter((e) => e.etapa === s.id).reduce((a, e) => a + e.valor, 0);
       const orcado = (orcamentoTotal * s.pct) / 100;
-      const pu = orcado > 0 ? (gasto / orcado) * 100 : 0;
-      return { ...s, gasto, orcado, pu };
+      return { nome: s.nome.length > 18 ? s.nome.slice(0, 16) + "…" : s.nome, nomeCompleto: s.nome, Orçado: orcado, Gasto: gasto };
     })
-    .sort((a, b) => b.gasto - a.gasto)
-    .slice(0, 4);
+    .sort((a, b) => b.Gasto - a.Gasto)
+    .slice(0, 6);
 
   const recentes = [...entries].sort((a, b) => (a.data < b.data ? 1 : -1)).slice(0, 5);
 
@@ -66,49 +102,57 @@ export default function VisaoGeral({ obra, stages, entries }) {
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 20 }} className="two-col">
+      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20 }} className="two-col">
         <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 22 }}>
-          <div style={{ fontSize: 14.5, fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>Etapas com mais gasto</div>
-          <div style={{ fontSize: 12, color: COLORS.textSoft, marginBottom: 16 }}>Onde o dinheiro está indo primeiro</div>
-          {etapasComGasto.length === 0 && (
+          <div style={{ fontSize: 14.5, fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>Orçado x Gasto por etapa</div>
+          <div style={{ fontSize: 12, color: COLORS.textSoft, marginBottom: 16 }}>As 6 etapas com mais movimento</div>
+          {dadosEtapas.length === 0 ? (
             <div style={{ fontSize: 13, color: COLORS.textSoft, padding: "20px 0" }}>Nenhum gasto registrado ainda.</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={Math.max(220, dadosEtapas.length * 46)}>
+              <BarChart data={dadosEtapas} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.border} horizontal={false} />
+                <XAxis type="number" tickFormatter={(v) => fmtBRL(v)} tick={{ fontSize: 11, fill: COLORS.textSoft }} />
+                <YAxis type="category" dataKey="nome" width={130} tick={{ fontSize: 11.5, fill: COLORS.text }} />
+                <Tooltip content={<TooltipEtapas />} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="Orçado" fill={COLORS.border} radius={[0, 4, 4, 0]} />
+                <Bar dataKey="Gasto" fill={COLORS.action} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           )}
-          {etapasComGasto.map((s) => {
-            const st = statusEtapa(s.pu);
-            return (
-              <div key={s.id} style={{ marginBottom: 14 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
-                  <span style={{ fontWeight: 600, color: COLORS.text }}>{s.nome}</span>
-                  <span style={{ color: COLORS.textSoft }}>{fmtBRL(s.gasto)} <span style={{ color: st.color }}>({s.pu.toFixed(0)}%)</span></span>
-                </div>
-                <div style={{ height: 6, background: COLORS.border, borderRadius: 4, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${Math.min(s.pu, 100)}%`, background: st.color }} />
-                </div>
-              </div>
-            );
-          })}
         </div>
 
         <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 22 }}>
           <div style={{ fontSize: 14.5, fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>Para onde está indo o dinheiro</div>
           <div style={{ fontSize: 12, color: COLORS.textSoft, marginBottom: 16 }}>Por categoria</div>
-          {categoriasOrdenadas.length === 0 && (
+          {dadosPizza.length === 0 ? (
             <div style={{ fontSize: 13, color: COLORS.textSoft, padding: "20px 0" }}>Sem dados suficientes ainda.</div>
-          )}
-          {categoriasOrdenadas.map(([cat, val]) => {
-            const pct = totalGasto > 0 ? (val / totalGasto) * 100 : 0;
-            return (
-              <div key={cat} style={{ marginBottom: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
-                  <span style={{ fontWeight: 600, color: COLORS.text }}>{CATEGORIA_LABEL[cat] || cat}</span>
-                  <span style={{ color: COLORS.textSoft }}>{pct.toFixed(0)}%</span>
-                </div>
-                <div style={{ height: 6, background: COLORS.border, borderRadius: 4, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${pct}%`, background: COLORS.action }} />
-                </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={dadosPizza} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2}>
+                    {dadosPizza.map((d, i) => (
+                      <Cell key={i} fill={d.cor} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<TooltipCategoria />} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+                {dadosPizza.map((d, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12.5 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 3, background: d.cor, display: "inline-block" }} />
+                      <span style={{ color: COLORS.text, fontWeight: 600 }}>{d.name}</span>
+                    </div>
+                    <span style={{ color: COLORS.textSoft }}>{fmtBRL(d.value)} · {d.pct.toFixed(0)}%</span>
+                  </div>
+                ))}
               </div>
-            );
-          })}
+            </>
+          )}
         </div>
       </div>
 
