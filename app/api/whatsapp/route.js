@@ -202,6 +202,30 @@ export async function POST(req) {
   let etapa = campos["etapa"];
   let obraTexto = campos["obra"];
 
+  // Rascunho de uma pergunta anterior do bot (ex: "qual obra?")
+  const rascunho = await buscarRascunho(telefone);
+
+  // Caso especial: já tínhamos valor+descrição, só faltava saber a obra.
+  // Tratamos a mensagem inteira como possível nome de obra diretamente,
+  // sem depender da IA genérica decidir se "isso parece um gasto".
+  if (rascunho && rascunho.valor && rascunho.descricao && !valor && !descricao) {
+    const obrasTeste = await obrasAtivasDoTelefone(telefone);
+    const obraDireta = encontrarObraPorNome(obrasTeste, bodyRaw);
+    if (obraDireta) {
+      await limparRascunho(telefone);
+      const { data, error } = await supabaseAdmin.rpc("whatsapp_criar_pendente", {
+        p_telefone: telefone,
+        p_valor: rascunho.valor,
+        p_descricao: rascunho.descricao,
+        p_categoria: rascunho.categoria || "outros",
+        p_fornecedor: rascunho.fornecedor || null,
+        p_etapa_busca: rascunho.etapa_busca || null,
+        p_obra_busca: obraDireta.nome,
+      });
+      return twiml(error ? "Ocorreu um erro ao processar seu lançamento. Tente novamente." : data);
+    }
+  }
+
   // 2ª tentativa: texto livre via IA
   if (!valor && !descricao) {
     const extraido = await extrairComIA(bodyRaw);
@@ -215,8 +239,7 @@ export async function POST(req) {
     }
   }
 
-  // Junta com rascunho pendente (resposta a uma pergunta anterior do bot)
-  const rascunho = await buscarRascunho(telefone);
+  // Junta o que faltar com o rascunho
   if (rascunho) {
     valor = valor ?? rascunho.valor;
     descricao = descricao ?? rascunho.descricao;
