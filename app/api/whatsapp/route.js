@@ -35,7 +35,6 @@ function validarAssinaturaTwilio(url, params, assinaturaRecebida) {
   }
 }
 
-// Extrai "chave: valor" de cada linha da mensagem (formato estruturado, grátis e instantâneo)
 function parseCampos(texto) {
   const campos = {};
   texto.split("\n").forEach((linha) => {
@@ -55,7 +54,19 @@ function parseValor(txt) {
   return isNaN(n) ? null : n;
 }
 
-// Fallback com IA: interpreta texto livre quando o formato estruturado não bate
+const ETAPAS_CONHECIDAS = [
+  "Terraplanagem / Fundação",
+  "Estrutura (alvenaria/laje)",
+  "Cobertura / Telhado",
+  "Instalações (elétrica/hidráulica)",
+  "Esquadrias (portas/janelas)",
+  "Revestimentos / Acabamento",
+  "Pintura",
+  "Área externa / Paisagismo",
+  "Documentação / Taxas / Projetos",
+  "Imprevistos (reserva)",
+];
+
 async function extrairComIA(textoLivre) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
@@ -75,8 +86,12 @@ async function extrairComIA(textoLivre) {
             role: "system",
             content:
               "Você extrai dados de gastos de obra a partir de mensagens em português informal do Brasil. " +
-              "Responda APENAS com um JSON no formato: " +
+              "Responda APENAS com um JSON: " +
               '{"valor": número ou null, "descricao": string ou null, "categoria": uma de "material","mao_de_obra","equipamento","taxas","outros" ou null, "fornecedor": string ou null, "etapa": string ou null, "obra": string ou null}. ' +
+              "Para 'etapa', escolha a mais provável entre exatamente estas opções (ou null se genuinamente não souber): " +
+              ETAPAS_CONHECIDAS.map((e) => `"${e}"`).join(", ") + ". " +
+              "Use conhecimento geral de construção civil para inferir a etapa e categoria mesmo que não estejam explícitas — " +
+              "ex: chuveiro/torneira/fiação/tomada → Instalações (elétrica/hidráulica); tijolo/laje/viga → Estrutura; telha → Cobertura/Telhado; tinta → Pintura. " +
               "Se a mensagem não parecer ser sobre um gasto de obra, retorne todos os campos null.",
           },
           { role: "user", content: textoLivre },
@@ -86,8 +101,7 @@ async function extrairComIA(textoLivre) {
       }),
     });
     if (!resp.ok) {
-      const erroTexto = await resp.text();
-      console.error("Erro na API da OpenAI:", resp.status, erroTexto);
+      console.error("Erro na API da OpenAI:", resp.status, await resp.text());
       return null;
     }
     const data = await resp.json();
@@ -98,6 +112,42 @@ async function extrairComIA(textoLivre) {
     console.error("Erro na extração por IA:", e);
     return null;
   }
+}
+
+async function buscarRascunho(telefone) {
+  const { data } = await supabaseAdmin
+    .from("whatsapp_rascunhos")
+    .select("*")
+    .eq("telefone", telefone)
+    .gte("atualizado_em", new Date(Date.now() - 15 * 60 * 1000).toISOString())
+    .maybeSingle();
+  return data;
+}
+
+async function salvarRascunho(telefone, dados) {
+  await supabaseAdmin
+    .from("whatsapp_rascunhos")
+    .upsert({ telefone, ...dados, atualizado_em: new Date().toISOString() });
+}
+
+async function limparRascunho(telefone) {
+  await supabaseAdmin.from("whatsapp_rascunhos").delete().eq("telefone", telefone);
+}
+
+// Descobre quantas/quais obras ativas a empresa do telefone tem
+async function obrasAtivasDoTelefone(telefone) {
+  const { data: perfil } = await supabaseAdmin.from("perfis").select("user_id").eq("telefone", telefone).maybeSingle();
+  if (!perfil) return [];
+  const { data: vinculo } = await supabaseAdmin.from("usuarios_empresas").select("empresa_id").eq("user_id", perfil.user_id).maybeSingle();
+  if (!vinculo) return [];
+  const { data: obras } = await supabaseAdmin.from("obras").select("id, nome").eq("empresa_id", vinculo.empresa_id).neq("status", "vendida");
+  return obras || [];
+}
+
+function encontrarObraPorNome(obras, textoBusca) {
+  if (!textoBusca) return null;
+  const alvo = textoBusca.toLowerCase();
+  return obras.find((o) => o.nome.toLowerCase().includes(alvo)) || null;
 }
 
 export async function POST(req) {
@@ -124,6 +174,7 @@ export async function POST(req) {
     return twiml(error ? "Erro ao confirmar. Tente novamente." : data);
   }
   if (["cancelar", "cancel", "não", "nao", "n"].includes(bodyLower)) {
+    await limparRascunho(telefone);
     const { data, error } = await supabaseAdmin.rpc("whatsapp_cancelar_pendente", { p_telefone: telefone });
     return twiml(error ? "Erro ao cancelar." : data);
   }
@@ -142,24 +193,37 @@ export async function POST(req) {
     );
   }
 
-  // 1ª tentativa: formato estruturado (grátis, instantâneo)
+  // 1ª tentativa: formato estruturado
   let campos = parseCampos(bodyRaw);
   let valor = parseValor(campos["valor"]);
   let descricao = campos["desc"] || campos["descricao"];
+  let categoria = campos["categoria"];
+  let fornecedor = campos["fornecedor"];
+  let etapa = campos["etapa"];
+  let obraTexto = campos["obra"];
 
-  // 2ª tentativa: texto livre interpretado por IA
-  if (!valor || !descricao) {
+  // 2ª tentativa: texto livre via IA
+  if (!valor && !descricao) {
     const extraido = await extrairComIA(bodyRaw);
-    if (extraido && extraido.valor && extraido.descricao) {
-      valor = extraido.valor;
-      descricao = extraido.descricao;
-      campos = {
-        categoria: extraido.categoria || undefined,
-        fornecedor: extraido.fornecedor || undefined,
-        etapa: extraido.etapa || undefined,
-        obra: extraido.obra || undefined,
-      };
+    if (extraido) {
+      valor = valor || extraido.valor;
+      descricao = descricao || extraido.descricao;
+      categoria = categoria || extraido.categoria;
+      fornecedor = fornecedor || extraido.fornecedor;
+      etapa = etapa || extraido.etapa;
+      obraTexto = obraTexto || extraido.obra;
     }
+  }
+
+  // Junta com rascunho pendente (resposta a uma pergunta anterior do bot)
+  const rascunho = await buscarRascunho(telefone);
+  if (rascunho) {
+    valor = valor ?? rascunho.valor;
+    descricao = descricao ?? rascunho.descricao;
+    categoria = categoria ?? rascunho.categoria;
+    fornecedor = fornecedor ?? rascunho.fornecedor;
+    etapa = etapa ?? rascunho.etapa_busca;
+    obraTexto = obraTexto ?? rascunho.obra_busca;
   }
 
   if (!valor || !descricao) {
@@ -174,14 +238,30 @@ export async function POST(req) {
     );
   }
 
+  // Checa ambiguidade de obra ANTES de criar o pendente de verdade
+  const obras = await obrasAtivasDoTelefone(telefone);
+  if (obras.length > 1) {
+    const obraEncontrada = encontrarObraPorNome(obras, obraTexto);
+    if (!obraEncontrada) {
+      await salvarRascunho(telefone, { valor, descricao, categoria, fornecedor, etapa_busca: etapa, obra_busca: obraTexto });
+      return twiml(
+        `Você tem mais de uma obra em andamento (${obras.map((o) => o.nome).join(", ")}). ` +
+        `Só me diga o nome da obra que eu completo o lançamento de "${descricao}" (R$ ${valor}).`
+      );
+    }
+    obraTexto = obraEncontrada.nome;
+  }
+
+  await limparRascunho(telefone);
+
   const { data, error } = await supabaseAdmin.rpc("whatsapp_criar_pendente", {
     p_telefone: telefone,
     p_valor: valor,
     p_descricao: descricao,
-    p_categoria: campos["categoria"] || "outros",
-    p_fornecedor: campos["fornecedor"] || null,
-    p_etapa_busca: campos["etapa"] || null,
-    p_obra_busca: campos["obra"] || null,
+    p_categoria: categoria || "outros",
+    p_fornecedor: fornecedor || null,
+    p_etapa_busca: etapa || null,
+    p_obra_busca: obraTexto || null,
   });
 
   if (error) {
