@@ -85,7 +85,11 @@ async function extrairComIA(textoLivre) {
         temperature: 0,
       }),
     });
-    if (!resp.ok) return null;
+    if (!resp.ok) {
+      const erroTexto = await resp.text();
+      console.error("Erro na API da OpenAI:", resp.status, erroTexto);
+      return null;
+    }
     const data = await resp.json();
     const conteudo = data.choices?.[0]?.message?.content;
     if (!conteudo) return null;
