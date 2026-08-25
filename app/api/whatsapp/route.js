@@ -5,35 +5,15 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_KEY
 );
 
-async function enviarWhatsApp(paraTelefone, mensagem) {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  const de = process.env.TWILIO_WHATSAPP_NUMBER;
-
-  const auth = Buffer.from(`${sid}:${token}`).toString("base64");
-  const body = new URLSearchParams({
-    To: `whatsapp:+${paraTelefone}`,
-    From: `whatsapp:${de}`,
-    Body: mensagem,
-  });
-
-  const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-  });
-
-  if (!resp.ok) {
-    const erro = await resp.text();
-    console.error("Erro ao enviar WhatsApp:", resp.status, erro);
-  }
-}
-
-function ok() {
-  return new Response("OK", { status: 200 });
+function twiml(mensagem) {
+  const escapada = mensagem
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return new Response(
+    `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapada}</Message></Response>`,
+    { headers: { "Content-Type": "text/xml" } }
+  );
 }
 
 // Extrai "chave: valor" de cada linha da mensagem
@@ -64,25 +44,22 @@ export async function POST(req) {
   const bodyLower = bodyRaw.toLowerCase();
 
   if (!telefone) {
-    return ok();
+    return twiml("Não foi possível identificar seu número.");
   }
 
   // Confirmação / cancelamento
-  if (["sim", "confirmar", "confirmo", "s", "ok"].includes(bodyLower)) {
+  if (["sim", "confirmar", "confirmo", "s"].includes(bodyLower)) {
     const { data, error } = await supabase.rpc("whatsapp_confirmar_pendente", { p_telefone: telefone });
-    await enviarWhatsApp(telefone, error ? "Erro ao confirmar. Tente novamente." : data);
-    return ok();
+    return twiml(error ? "Erro ao confirmar. Tente novamente." : data);
   }
   if (["cancelar", "cancel", "não", "nao", "n"].includes(bodyLower)) {
     const { data, error } = await supabase.rpc("whatsapp_cancelar_pendente", { p_telefone: telefone });
-    await enviarWhatsApp(telefone, error ? "Erro ao cancelar." : data);
-    return ok();
+    return twiml(error ? "Erro ao cancelar." : data);
   }
 
   // Mensagem de ajuda / primeiro contato
   if (["oi", "ola", "olá", "ajuda", "help", "menu"].includes(bodyLower)) {
-    await enviarWhatsApp(
-      telefone,
+    return twiml(
       "👋 Olá! Sou o assistente do Prumo.\n\n" +
       "Para lançar um gasto, envie assim:\n\n" +
       "valor: 200\n" +
@@ -92,7 +69,6 @@ export async function POST(req) {
       "etapa: fundação\n\n" +
       "(fornecedor e etapa são opcionais)"
     );
-    return ok();
   }
 
   const campos = parseCampos(bodyRaw);
@@ -100,8 +76,7 @@ export async function POST(req) {
   const descricao = campos["desc"] || campos["descricao"];
 
   if (!valor || !descricao) {
-    await enviarWhatsApp(
-      telefone,
+    return twiml(
       "Não entendi. Envie no formato:\n\n" +
       "valor: 200\n" +
       "desc: cimento\n" +
@@ -110,7 +85,6 @@ export async function POST(req) {
       "etapa: fundação\n\n" +
       "Digite *ajuda* a qualquer momento para ver este exemplo de novo."
     );
-    return ok();
   }
 
   const { data, error } = await supabase.rpc("whatsapp_criar_pendente", {
@@ -123,6 +97,8 @@ export async function POST(req) {
     p_obra_busca: campos["obra"] || null,
   });
 
-  await enviarWhatsApp(telefone, error ? "Ocorreu um erro ao processar seu lançamento. Tente novamente." : data);
-  return ok();
+  if (error) {
+    return twiml("Ocorreu um erro ao processar seu lançamento. Tente novamente.");
+  }
+  return twiml(data);
 }
