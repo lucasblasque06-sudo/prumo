@@ -2,6 +2,7 @@ export const metadata = {
   title: "Prumo — Casa Dona Maria Cândida",
   description: "Controle financeiro de obra",
   manifest: "/manifest.json",
+  robots: "noindex, nofollow",
   icons: {
     icon: "/icon-192.png",
     apple: "/icon-192.png",

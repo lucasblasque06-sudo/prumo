@@ -1,8 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
 
-const supabase = createClient(
+// Cliente com privilégio elevado — só usado neste servidor, nunca exposto ao navegador.
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 function twiml(mensagem) {
@@ -14,6 +16,25 @@ function twiml(mensagem) {
     `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapada}</Message></Response>`,
     { headers: { "Content-Type": "text/xml" } }
   );
+}
+
+function negar() {
+  return new Response("Forbidden", { status: 403 });
+}
+
+// Confirma que a requisição realmente veio da Twilio (evita mensagens forjadas)
+function validarAssinaturaTwilio(url, params, assinaturaRecebida) {
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!authToken || !assinaturaRecebida) return false;
+  const dados = Object.keys(params)
+    .sort()
+    .reduce((acc, chave) => acc + chave + params[chave], url);
+  const esperada = crypto.createHmac("sha1", authToken).update(Buffer.from(dados, "utf-8")).digest("base64");
+  try {
+    return crypto.timingSafeEqual(Buffer.from(esperada), Buffer.from(assinaturaRecebida));
+  } catch {
+    return false;
+  }
 }
 
 // Extrai "chave: valor" de cada linha da mensagem
@@ -38,8 +59,16 @@ function parseValor(txt) {
 
 export async function POST(req) {
   const form = await req.formData();
-  const bodyRaw = (form.get("Body") || "").toString().trim();
-  const fromRaw = (form.get("From") || "").toString();
+  const paramsObj = {};
+  for (const [chave, valor] of form.entries()) paramsObj[chave] = valor.toString();
+
+  const assinatura = req.headers.get("x-twilio-signature");
+  if (!validarAssinaturaTwilio(req.url, paramsObj, assinatura)) {
+    return negar();
+  }
+
+  const bodyRaw = (paramsObj["Body"] || "").trim();
+  const fromRaw = paramsObj["From"] || "";
   const telefone = fromRaw.replace("whatsapp:", "").replace(/[^\d]/g, "");
   const bodyLower = bodyRaw.toLowerCase();
 
@@ -49,11 +78,11 @@ export async function POST(req) {
 
   // Confirmação / cancelamento
   if (["sim", "confirmar", "confirmo", "s"].includes(bodyLower)) {
-    const { data, error } = await supabase.rpc("whatsapp_confirmar_pendente", { p_telefone: telefone });
+    const { data, error } = await supabaseAdmin.rpc("whatsapp_confirmar_pendente", { p_telefone: telefone });
     return twiml(error ? "Erro ao confirmar. Tente novamente." : data);
   }
   if (["cancelar", "cancel", "não", "nao", "n"].includes(bodyLower)) {
-    const { data, error } = await supabase.rpc("whatsapp_cancelar_pendente", { p_telefone: telefone });
+    const { data, error } = await supabaseAdmin.rpc("whatsapp_cancelar_pendente", { p_telefone: telefone });
     return twiml(error ? "Erro ao cancelar." : data);
   }
 
@@ -87,7 +116,7 @@ export async function POST(req) {
     );
   }
 
-  const { data, error } = await supabase.rpc("whatsapp_criar_pendente", {
+  const { data, error } = await supabaseAdmin.rpc("whatsapp_criar_pendente", {
     p_telefone: telefone,
     p_valor: valor,
     p_descricao: descricao,
