@@ -36,6 +36,12 @@ export default function AdminEmpresaDetalhe() {
   const [criandoObra, setCriandoObra] = useState(false);
   const [erroObra, setErroObra] = useState(null);
 
+  const [obraEditando, setObraEditando] = useState(null);
+  const [formEdicao, setFormEdicao] = useState({});
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [excluindoObraId, setExcluindoObraId] = useState(null);
+  const [removendoMembroId, setRemovendoMembroId] = useState(null);
+
   async function carregar() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -124,6 +130,67 @@ export default function AdminEmpresaDetalhe() {
     carregar();
   };
 
+  const abrirEdicao = (obra) => {
+    setObraEditando(obra.id);
+    setFormEdicao({
+      nome: obra.nome || "",
+      quadra_lote: obra.quadra_lote || "",
+      endereco: obra.endereco || "",
+      status: obra.status || "em_andamento",
+      terreno_valor: obra.terreno_valor || "",
+      orcamento_total: obra.orcamento_total || "",
+      venda_prevista: obra.venda_prevista || "",
+    });
+  };
+
+  const salvarEdicao = async (e) => {
+    e.preventDefault();
+    setSalvandoEdicao(true);
+    const { error } = await supabase
+      .from("obras")
+      .update({
+        nome: formEdicao.nome,
+        quadra_lote: formEdicao.quadra_lote || null,
+        endereco: formEdicao.endereco,
+        status: formEdicao.status,
+        terreno_valor: Number(formEdicao.terreno_valor) || 0,
+        orcamento_total: Number(formEdicao.orcamento_total) || 0,
+        venda_prevista: Number(formEdicao.venda_prevista) || 0,
+      })
+      .eq("id", obraEditando);
+    setSalvandoEdicao(false);
+    if (error) {
+      alert("Erro ao salvar: " + error.message);
+      return;
+    }
+    setObraEditando(null);
+    carregar();
+  };
+
+  const excluirObra = async (obraId, nomeObra) => {
+    if (!confirm(`Tem certeza que quer excluir a obra "${nomeObra}"? Isso apaga TODOS os lançamentos e etapas dela. Essa ação não pode ser desfeita.`)) return;
+    setExcluindoObraId(obraId);
+    const { error } = await supabase.from("obras").delete().eq("id", obraId);
+    setExcluindoObraId(null);
+    if (error) {
+      alert("Erro ao excluir: " + error.message);
+      return;
+    }
+    carregar();
+  };
+
+  const removerMembro = async (userId, nomeMembro) => {
+    if (!confirm(`Remover ${nomeMembro || "este membro"} desta empresa? A conta dele continua existindo, só perde acesso a esta empresa.`)) return;
+    setRemovendoMembroId(userId);
+    const { error } = await supabase.from("usuarios_empresas").delete().eq("user_id", userId).eq("empresa_id", empresaId);
+    setRemovendoMembroId(null);
+    if (error) {
+      alert("Erro ao remover: " + error.message);
+      return;
+    }
+    carregar();
+  };
+
   if (carregando || !autorizado) {
     return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textSoft, fontFamily: "'Manrope', system-ui, sans-serif" }}>Carregando…</div>;
   }
@@ -145,12 +212,21 @@ export default function AdminEmpresaDetalhe() {
           <div style={{ fontSize: 14.5, fontWeight: 700, color: COLORS.text, marginBottom: 14 }}>Membros ({membros.length})</div>
           {membros.length === 0 && <div style={{ fontSize: 13, color: COLORS.textSoft, marginBottom: 16 }}>Nenhum membro ainda.</div>}
           {membros.map((m) => (
-            <div key={m.user_id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${COLORS.border}`, fontSize: 13 }}>
-              <div>
+            <div key={m.user_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${COLORS.border}`, fontSize: 13, gap: 10 }}>
+              <div style={{ minWidth: 0 }}>
                 <span style={{ fontWeight: 600, color: COLORS.text }}>{m.nome || "(sem nome)"}</span>
                 <span style={{ color: COLORS.textSoft }}> — {m.email}</span>
               </div>
-              <div style={{ color: COLORS.textSoft, fontFamily: FONT_MONO, fontSize: 12 }}>{m.telefone || "sem WhatsApp"}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                <div style={{ color: COLORS.textSoft, fontFamily: FONT_MONO, fontSize: 12 }}>{m.telefone || "sem WhatsApp"}</div>
+                <button
+                  onClick={() => removerMembro(m.user_id, m.nome)}
+                  disabled={removendoMembroId === m.user_id}
+                  style={{ background: "none", border: "none", color: COLORS.bad, cursor: "pointer", fontSize: 11.5, fontWeight: 600, padding: 0 }}
+                >
+                  {removendoMembroId === m.user_id ? "…" : "Remover"}
+                </button>
+              </div>
             </div>
           ))}
 
@@ -221,13 +297,75 @@ export default function AdminEmpresaDetalhe() {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {obras.map((o) => {
               const st = STATUS_OBRA_LABEL[o.status] || STATUS_OBRA_LABEL.em_andamento;
+              const editando = obraEditando === o.id;
               return (
-                <div key={o.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: COLORS.bg, borderRadius: 8, fontSize: 13 }}>
-                  <div>
-                    <div style={{ fontWeight: 600, color: COLORS.text }}>{o.nome}{o.quadra_lote ? ` - ${o.quadra_lote}` : ""}</div>
-                    <div style={{ fontSize: 11.5, color: st.color, marginTop: 2 }}>{st.dot} {st.label}</div>
+                <div key={o.id} style={{ background: COLORS.bg, borderRadius: 8, overflow: "hidden" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px" }}>
+                    <div>
+                      <div style={{ fontWeight: 600, color: COLORS.text, fontSize: 13 }}>{o.nome}{o.quadra_lote ? ` - ${o.quadra_lote}` : ""}</div>
+                      <div style={{ fontSize: 11.5, color: st.color, marginTop: 2 }}>{st.dot} {st.label}</div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ fontFamily: FONT_MONO, color: COLORS.textSoft, fontSize: 12.5 }}>{fmtBRL(o.orcamento_total)}</div>
+                      <button
+                        onClick={() => (editando ? setObraEditando(null) : abrirEdicao(o))}
+                        style={{ background: "none", border: "none", color: COLORS.action, cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: 0 }}
+                      >
+                        {editando ? "Fechar" : "Editar"}
+                      </button>
+                      <button
+                        onClick={() => excluirObra(o.id, o.nome)}
+                        disabled={excluindoObraId === o.id}
+                        style={{ background: "none", border: "none", color: COLORS.bad, cursor: "pointer", fontSize: 11.5, fontWeight: 600, padding: 0 }}
+                      >
+                        {excluindoObraId === o.id ? "…" : "Excluir"}
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ fontFamily: FONT_MONO, color: COLORS.textSoft, fontSize: 12.5 }}>{fmtBRL(o.orcamento_total)}</div>
+
+                  {editando && (
+                    <form onSubmit={salvarEdicao} style={{ padding: "0 14px 16px" }}>
+                      <div style={{ marginBottom: 8 }}>
+                        <label style={labelStyle}>Nome</label>
+                        <input required value={formEdicao.nome} onChange={(e) => setFormEdicao({ ...formEdicao, nome: e.target.value })} style={inputStyle} />
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 8 }}>
+                        <div>
+                          <label style={labelStyle}>Quadra e Lote</label>
+                          <input value={formEdicao.quadra_lote} onChange={(e) => setFormEdicao({ ...formEdicao, quadra_lote: e.target.value })} style={inputStyle} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Status</label>
+                          <select value={formEdicao.status} onChange={(e) => setFormEdicao({ ...formEdicao, status: e.target.value })} style={inputStyle}>
+                            {Object.entries(STATUS_OBRA_LABEL).map(([k, v]) => (
+                              <option key={k} value={k}>{v.dot} {v.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div style={{ marginBottom: 8 }}>
+                        <label style={labelStyle}>Endereço</label>
+                        <input value={formEdicao.endereco} onChange={(e) => setFormEdicao({ ...formEdicao, endereco: e.target.value })} style={inputStyle} />
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
+                        <div>
+                          <label style={labelStyle}>Terreno (R$)</label>
+                          <input type="number" value={formEdicao.terreno_valor} onChange={(e) => setFormEdicao({ ...formEdicao, terreno_valor: e.target.value })} style={inputStyle} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Orçamento (R$)</label>
+                          <input type="number" value={formEdicao.orcamento_total} onChange={(e) => setFormEdicao({ ...formEdicao, orcamento_total: e.target.value })} style={inputStyle} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Venda prevista (R$)</label>
+                          <input type="number" value={formEdicao.venda_prevista} onChange={(e) => setFormEdicao({ ...formEdicao, venda_prevista: e.target.value })} style={inputStyle} />
+                        </div>
+                      </div>
+                      <button type="submit" disabled={salvandoEdicao} style={{ width: "100%", padding: 10, borderRadius: 8, border: "none", background: COLORS.action, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
+                        {salvandoEdicao ? "Salvando…" : "Salvar alterações"}
+                      </button>
+                    </form>
+                  )}
                 </div>
               );
             })}
