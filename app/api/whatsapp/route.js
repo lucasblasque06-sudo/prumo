@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+import { extractText, getDocumentProxy } from "unpdf";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -165,19 +166,11 @@ async function transcreverAudio(buffer, contentType) {
 // Extrai o texto de um PDF (funciona bem para notas fiscais eletrônicas, que têm texto real embutido)
 async function extrairTextoPDF(buffer) {
   try {
-    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-    const data = new Uint8Array(buffer);
-    const doc = await pdfjsLib.getDocument({ data, disableWorker: true }).promise;
-    let texto = "";
-    const maxPaginas = Math.min(doc.numPages, 3);
-    for (let i = 1; i <= maxPaginas; i++) {
-      const page = await doc.getPage(i);
-      const content = await page.getTextContent();
-      texto += content.items.map((it) => it.str).join(" ") + "\n";
-    }
-    return texto.trim();
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text } = await extractText(pdf, { mergePages: true });
+    return (text || "").trim();
   } catch (e) {
-    console.error("Erro ao ler PDF:", e);
+    console.error("Erro ao ler PDF:", e.message);
     return "";
   }
 }
