@@ -159,7 +159,25 @@ async function transcreverAudio(buffer, contentType) {
   }
 }
 
-// Lê uma foto de nota fiscal/recibo usando IA de visão
+// Extrai o texto de um PDF (funciona bem para notas fiscais eletrônicas, que têm texto real embutido)
+async function extrairTextoPDF(buffer) {
+  try {
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const data = new Uint8Array(buffer);
+    const doc = await pdfjsLib.getDocument({ data, disableWorker: true }).promise;
+    let texto = "";
+    const maxPaginas = Math.min(doc.numPages, 3);
+    for (let i = 1; i <= maxPaginas; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      texto += content.items.map((it) => it.str).join(" ") + "\n";
+    }
+    return texto.trim();
+  } catch (e) {
+    console.error("Erro ao ler PDF:", e);
+    return "";
+  }
+}
 async function extrairDeImagem(buffer, contentType) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
@@ -318,6 +336,15 @@ export async function POST(req) {
       extraidoDeImagem = await extrairDeImagem(midia.buffer, midia.contentType);
       if (!extraidoDeImagem || (!extraidoDeImagem.valor && !extraidoDeImagem.descricao)) {
         return twiml("Não consegui ler os dados dessa imagem. Pode tentar uma foto mais nítida da nota, ou me contar o gasto em texto?");
+      }
+    } else if (mediaType === "application/pdf") {
+      const textoPDF = await extrairTextoPDF(midia.buffer);
+      if (textoPDF.length > 20) {
+        // PDF com texto de verdade (nota fiscal eletrônica): reaproveita o motor de texto livre
+        bodyRaw = (bodyRaw ? bodyRaw + " " : "") + textoPDF;
+      } else {
+        // PDF sem texto extraível (provavelmente é uma imagem escaneada dentro do PDF)
+        return twiml("Recebi o PDF, mas não consegui ler o conteúdo (parece ser uma imagem digitalizada, não texto). Pode tirar uma foto da nota em vez de mandar o PDF?");
       }
     }
   }
