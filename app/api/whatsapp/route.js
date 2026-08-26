@@ -379,6 +379,7 @@ export async function POST(req) {
   }
 
   if (!valor || !descricao) {
+    await supabaseAdmin.from("whatsapp_falhas").insert({ telefone, mensagem: bodyRaw0 || "(mídia sem legenda)" });
     return twiml(
       "Não entendi. Você pode:\n" +
       '• Descrever naturalmente (ex: "gastei 200 em cimento")\n' +
