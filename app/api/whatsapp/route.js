@@ -121,12 +121,15 @@ async function baixarMidiaTwilio(url) {
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
   try {
     const resp = await fetch(url, { headers: { Authorization: `Basic ${auth}` } });
-    if (!resp.ok) return null;
+    if (!resp.ok) {
+      console.error("Erro ao baixar mídia da Twilio - status:", resp.status, await resp.text());
+      return null;
+    }
     const buffer = Buffer.from(await resp.arrayBuffer());
     const contentType = resp.headers.get("content-type") || "";
     return { buffer, contentType };
   } catch (e) {
-    console.error("Erro ao baixar mídia da Twilio:", e);
+    console.error("Erro ao baixar mídia da Twilio - exceção:", e.message);
     return null;
   }
 }
