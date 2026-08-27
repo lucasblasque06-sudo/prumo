@@ -63,7 +63,7 @@ export default function VisaoGeral({ obra, stages, entries }) {
   const dadosEtapas = stages
     .map((s) => {
       const gasto = entries.filter((e) => e.etapa === s.id).reduce((a, e) => a + e.valor, 0);
-      const orcado = s.pct !== null ? (orcamentoTotal * s.pct) / 100 : 0;
+      const orcado = s.orcadoValor !== null ? s.orcadoValor : 0;
       return { nome: s.nome.length > 18 ? s.nome.slice(0, 16) + "…" : s.nome, nomeCompleto: s.nome, Orçado: orcado, Gasto: gasto };
     })
     .sort((a, b) => b.Gasto - a.Gasto)

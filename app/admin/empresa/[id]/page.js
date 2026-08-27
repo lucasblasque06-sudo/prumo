@@ -119,7 +119,7 @@ export default function AdminEmpresaDetalhe() {
     const etapasParaInserir = ETAPAS_PADRAO.map((et) => ({
       obra_id: obra.id,
       nome: et.nome,
-      percentual_orcamento: formObra.definirOrcadoPorEtapa ? et.pct : null,
+      orcado_valor: formObra.definirOrcadoPorEtapa ? (Number(formObra.orcamento_total) || 0) * et.pct / 100 : null,
       ordem: et.ordem,
     }));
     const { error: e2 } = await supabase.from("etapas").insert(etapasParaInserir);
@@ -308,7 +308,7 @@ export default function AdminEmpresaDetalhe() {
                   onChange={(e) => setFormObra({ ...formObra, definirOrcadoPorEtapa: e.target.checked })}
                   style={{ marginTop: 2 }}
                 />
-                <span>Já definir % de orçamento por etapa (senão fica sem orçamento pré-definido, só acompanhando gasto)</span>
+                <span>Já definir orçamento por etapa em R$ (senão fica sem orçamento pré-definido, só acompanhando gasto)</span>
               </label>
               {erroObra && <div style={{ fontSize: 12.5, color: COLORS.bad, marginBottom: 10 }}>{erroObra}</div>}
               <button type="submit" disabled={criandoObra} style={{ width: "100%", padding: 11, borderRadius: 8, border: "none", background: COLORS.action, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13.5 }}>

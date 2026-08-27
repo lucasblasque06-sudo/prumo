@@ -71,7 +71,7 @@ export default function NovaObraPage() {
     const etapasParaInserir = ETAPAS_PADRAO.map((et) => ({
       obra_id: obra.id,
       nome: et.nome,
-      percentual_orcamento: form.definirOrcadoPorEtapa ? et.pct : null,
+      orcado_valor: form.definirOrcadoPorEtapa ? (Number(form.orcamento_total) || 0) * et.pct / 100 : null,
       ordem: et.ordem,
     }));
     const { error: e2 } = await supabase.from("etapas").insert(etapasParaInserir);
@@ -149,7 +149,7 @@ export default function NovaObraPage() {
                 style={{ marginTop: 3 }}
               />
               <span style={{ fontSize: 12.5, color: COLORS.text }}>
-                <strong>Já quero planejar quanto vai pra cada etapa</strong> (% do orçamento)
+                <strong>Já quero planejar quanto vai pra cada etapa</strong> (em R$)
                 <div style={{ color: COLORS.textSoft, fontSize: 11.5, marginTop: 3, lineHeight: 1.4 }}>
                   As etapas sempre existem pra você organizar os gastos. Isso aqui é só se você já sabe, por exemplo, "18% vai pra Estrutura" — se deixar desmarcado, as etapas entram sem orçamento pré-definido, e você só acompanha quanto já gastou em cada uma, sem comparar com uma previsão. Dá pra mudar isso depois, a qualquer momento.
                 </div>

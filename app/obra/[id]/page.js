@@ -67,7 +67,14 @@ export default function ObraDashboard() {
       const nomeEtapa = (id) => etapasData.find((s) => s.id === id)?.nome ?? id;
 
       setObra(obraData);
-      setStages(etapasData.map((e) => ({ id: e.id, nome: e.nome, pct: e.percentual_orcamento === null ? null : Number(e.percentual_orcamento) })));
+      const orcamentoTotalObra = Number(obraData?.orcamento_total || 0);
+      setStages(
+        etapasData.map((e) => {
+          const orcadoValor = e.orcado_valor === null ? null : Number(e.orcado_valor);
+          const pct = orcadoValor !== null && orcamentoTotalObra > 0 ? (orcadoValor / orcamentoTotalObra) * 100 : null;
+          return { id: e.id, nome: e.nome, orcadoValor, pct };
+        })
+      );
       setEntries(
         lancamentosData.map((l) => ({
           id: l.id,
@@ -95,10 +102,12 @@ export default function ObraDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [obraId]);
 
-  const updatePct = async (id, newPct) => {
-    const pct = Math.max(0, Math.min(100, newPct));
-    setStages((prev) => prev.map((s) => (s.id === id ? { ...s, pct } : s)));
-    const { error } = await supabase.from("etapas").update({ percentual_orcamento: pct }).eq("id", id);
+  const updateOrcadoValor = async (id, novoValor) => {
+    const valor = Math.max(0, novoValor);
+    const orcamentoTotalObra = Number(obra?.orcamento_total || 0);
+    const pct = orcamentoTotalObra > 0 ? (valor / orcamentoTotalObra) * 100 : null;
+    setStages((prev) => prev.map((s) => (s.id === id ? { ...s, orcadoValor: valor, pct } : s)));
+    const { error } = await supabase.from("etapas").update({ orcado_valor: valor }).eq("id", id);
     if (error) setErro("Não foi possível salvar a etapa: " + error.message);
   };
 
@@ -225,7 +234,7 @@ export default function ObraDashboard() {
 
           {page === "geral" && <VisaoGeral obra={obra} stages={stages} entries={entries} />}
           {page === "gastos" && <Gastos entries={entries} stages={stages} onEditar={setLancamentoEditando} />}
-          {page === "etapas" && <Etapas obra={obra} stages={stages} entries={entries} onUpdatePct={updatePct} />}
+          {page === "etapas" && <Etapas obra={obra} stages={stages} entries={entries} onUpdateOrcado={updateOrcadoValor} />}
           {page === "fornecedores" && <Fornecedores entries={entries} />}
         </div>
       </div>
