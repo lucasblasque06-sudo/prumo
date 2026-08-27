@@ -7,11 +7,13 @@ export default function CadastroPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [foto, setFoto] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const [erro, setErro] = useState(null);
   const [sucesso, setSucesso] = useState(false);
   const [conviteAceito, setConviteAceito] = useState(false);
+  const [avisoTelefoneDuplicado, setAvisoTelefoneDuplicado] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
   const escolherFoto = (e) => {
@@ -45,7 +47,18 @@ export default function CadastroPage() {
     }
 
     if (userId) {
-      await supabase.from("perfis").insert({ user_id: userId, nome: nome || null, foto_url: fotoUrl });
+      const telefoneDigitos = whatsapp.replace(/[^\d]/g, "");
+      const { error: erroPerfil } = await supabase.from("perfis").insert({
+        user_id: userId,
+        nome: nome || null,
+        foto_url: fotoUrl,
+        telefone: telefoneDigitos || null,
+      });
+      if (erroPerfil && erroPerfil.message.includes("duplicate") && telefoneDigitos) {
+        // Telefone já usado por outra conta — cria o perfil sem o telefone pra não travar o cadastro
+        await supabase.from("perfis").insert({ user_id: userId, nome: nome || null, foto_url: fotoUrl });
+        setAvisoTelefoneDuplicado(true);
+      }
     }
 
     // Se havia um convite pendente para este e-mail, vincula automaticamente à empresa
@@ -72,6 +85,11 @@ export default function CadastroPage() {
           ) : (
             <div style={{ fontSize: 13.5, color: COLORS.textSoft, lineHeight: 1.5 }}>
               Agora peça para quem já usa o Prumo na sua empresa te adicionar na tela de Equipe usando o e-mail <strong>{email}</strong>. Depois disso você já pode entrar normalmente.
+            </div>
+          )}
+          {avisoTelefoneDuplicado && (
+            <div style={{ fontSize: 12.5, color: COLORS.warn, background: COLORS.warnSoft, borderRadius: 8, padding: "10px 12px", marginTop: 12, textAlign: "left" }}>
+              ⚠️ O número de WhatsApp informado já está vinculado a outra conta, então sua conta foi criada sem ele. Você pode adicionar um número diferente depois, no seu perfil.
             </div>
           )}
           <a href="/login" style={{ display: "inline-block", marginTop: 20, color: COLORS.action, fontWeight: 700, fontSize: 13.5, textDecoration: "none" }}>Ir para o login →</a>
@@ -117,6 +135,11 @@ export default function CadastroPage() {
         <div style={{ marginBottom: 14 }}>
           <label style={{ fontSize: 11.5, fontWeight: 600, color: COLORS.textSoft, marginBottom: 5, display: "block" }}>E-mail</label>
           <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 13.5 }} />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 11.5, fontWeight: 600, color: COLORS.textSoft, marginBottom: 5, display: "block" }}>WhatsApp (opcional)</label>
+          <input placeholder="Ex: 19991502305 (com DDD)" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 13.5 }} />
+          <div style={{ fontSize: 11, color: COLORS.textSoft, marginTop: 4 }}>Permite lançar gastos direto pelo WhatsApp. Pode adicionar depois também.</div>
         </div>
         <div style={{ marginBottom: 20 }}>
           <label style={{ fontSize: 11.5, fontWeight: 600, color: COLORS.textSoft, marginBottom: 5, display: "block" }}>Senha</label>
