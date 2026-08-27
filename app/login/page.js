@@ -18,11 +18,15 @@ export default function LoginPage() {
     setErro(null);
     setCarregando(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
-    setCarregando(false);
     if (error) {
+      setCarregando(false);
       setErro("E-mail ou senha incorretos.");
       return;
     }
+    // Aplica qualquer convite pendente para este e-mail (cobre o caso de confirmação de
+    // e-mail ter atrasado o vínculo automático que tentamos fazer no momento do cadastro)
+    await supabase.rpc("aceitar_convite_pendente");
+    setCarregando(false);
     window.location.href = "/";
   };
 
