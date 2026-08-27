@@ -71,7 +71,7 @@ export default function VisaoGeral({ obra, stages, entries }) {
 
   const recentes = [...entries].sort((a, b) => (a.data < b.data ? 1 : -1)).slice(0, 5);
 
-  const vendida = obra?.status === "vendida";
+  const vendida = obra?.objetivo === "venda" && obra?.status === "vendida";
   const custoReal = Number(obra?.terreno_valor || 0) + totalGasto;
   const lucroReal = vendida ? Number(obra?.lucro ?? (Number(obra?.valor_liquido || 0) - custoReal)) : 0;
 
@@ -97,7 +97,9 @@ export default function VisaoGeral({ obra, stages, entries }) {
             />
             <StatCard label="Disponível" value={fmtBRL(disponivel)} sub={disponivel < 0 ? "orçamento estourado" : "restante"} subColor={disponivel < 0 ? COLORS.bad : COLORS.good} />
             <StatCard label="Terreno" value={fmtBRL(obra?.terreno_valor)} />
-            <StatCard label="Venda prevista" value={fmtBRL(obra?.venda_prevista)} subColor={COLORS.good} />
+            {obra?.objetivo === "venda" && (
+              <StatCard label="Venda prevista" value={fmtBRL(obra?.venda_prevista)} subColor={COLORS.good} />
+            )}
           </>
         )}
       </div>

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { COLORS, CARD_SHADOW } from "../../lib/theme";
+import { COLORS, CARD_SHADOW, OBJETIVO_LABEL } from "../../lib/theme";
 
 const ETAPAS_PADRAO = [
   { nome: "Terraplanagem / Fundação", pct: 8, ordem: 1 },
@@ -17,7 +17,7 @@ const ETAPAS_PADRAO = [
 ];
 
 export default function NovaObraPage() {
-  const [form, setForm] = useState({ nome: "", quadra_lote: "", endereco: "", terreno_valor: "", orcamento_total: "", venda_prevista: "" });
+  const [form, setForm] = useState({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "" });
   const [empresaId, setEmpresaId] = useState(null);
   const [erro, setErro] = useState(null);
   const [salvando, setSalvando] = useState(false);
@@ -54,9 +54,10 @@ export default function NovaObraPage() {
         nome: form.nome,
         quadra_lote: form.quadra_lote || null,
         endereco: form.endereco,
+        objetivo: form.objetivo,
         terreno_valor: Number(form.terreno_valor) || 0,
         orcamento_total: Number(form.orcamento_total) || 0,
-        venda_prevista: Number(form.venda_prevista) || 0,
+        venda_prevista: form.objetivo === "venda" ? (Number(form.venda_prevista) || 0) : 0,
       })
       .select()
       .single();
@@ -114,6 +115,14 @@ export default function NovaObraPage() {
             <label style={labelStyle}>Endereço</label>
             <input placeholder="Ex: Rua X, 123 - Indaiatuba/SP" value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} style={inputStyle} />
           </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Objetivo da obra</label>
+            <select value={form.objetivo} onChange={(e) => setForm({ ...form, objetivo: e.target.value })} style={inputStyle}>
+              {Object.entries(OBJETIVO_LABEL).map(([k, v]) => (
+                <option key={k} value={k}>{v.icon} {v.label}</option>
+              ))}
+            </select>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
             <div>
               <label style={labelStyle}>Terreno (R$)</label>
@@ -124,10 +133,12 @@ export default function NovaObraPage() {
               <input type="number" placeholder="0" value={form.orcamento_total} onChange={(e) => setForm({ ...form, orcamento_total: e.target.value })} style={inputStyle} />
             </div>
           </div>
-          <div style={{ marginBottom: 20 }}>
-            <label style={labelStyle}>Venda prevista (R$)</label>
-            <input type="number" placeholder="0" value={form.venda_prevista} onChange={(e) => setForm({ ...form, venda_prevista: e.target.value })} style={inputStyle} />
-          </div>
+          {form.objetivo === "venda" && (
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>Venda prevista (R$)</label>
+              <input type="number" placeholder="0" value={form.venda_prevista} onChange={(e) => setForm({ ...form, venda_prevista: e.target.value })} style={inputStyle} />
+            </div>
+          )}
 
           {erro && <div style={{ fontSize: 12.5, color: COLORS.bad, marginBottom: 14 }}>{erro}</div>}
 

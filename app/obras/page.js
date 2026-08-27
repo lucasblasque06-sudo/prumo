@@ -120,7 +120,7 @@ export default function ObrasPage() {
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontSize: 11.5, color: st.color, fontWeight: 600 }}>{st.dot} {st.label}</div>
                     <div style={{ fontSize: 12.5, color: COLORS.textSoft, marginTop: 4, fontFamily: FONT_MONO }}>
-                      {o.status === "vendida"
+                      {o.objetivo === "venda" && o.status === "vendida"
                         ? `Venda: ${fmtBRL(o.valor_venda_real)}`
                         : `Orçamento: ${fmtBRL(o.orcamento_total)}`}
                     </div>

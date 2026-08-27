@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
-import { COLORS, fmtBRL, STATUS_OBRA_LABEL, CARD_SHADOW, FONT_MONO } from "../../../../lib/theme";
+import { COLORS, fmtBRL, STATUS_OBRA_LABEL, OBJETIVO_LABEL, CARD_SHADOW, FONT_MONO } from "../../../../lib/theme";
 
 const ETAPAS_PADRAO = [
   { nome: "Terraplanagem / Fundação", pct: 8, ordem: 1 },
@@ -32,7 +32,7 @@ export default function AdminEmpresaDetalhe() {
   const [msgConvite, setMsgConvite] = useState(null);
 
   const [mostrarNovaObra, setMostrarNovaObra] = useState(false);
-  const [formObra, setFormObra] = useState({ nome: "", quadra_lote: "", endereco: "", terreno_valor: "", orcamento_total: "", venda_prevista: "" });
+  const [formObra, setFormObra] = useState({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "" });
   const [criandoObra, setCriandoObra] = useState(false);
   const [erroObra, setErroObra] = useState(null);
 
@@ -98,9 +98,10 @@ export default function AdminEmpresaDetalhe() {
         nome: formObra.nome,
         quadra_lote: formObra.quadra_lote || null,
         endereco: formObra.endereco,
+        objetivo: formObra.objetivo,
         terreno_valor: Number(formObra.terreno_valor) || 0,
         orcamento_total: Number(formObra.orcamento_total) || 0,
-        venda_prevista: Number(formObra.venda_prevista) || 0,
+        venda_prevista: formObra.objetivo === "venda" ? (Number(formObra.venda_prevista) || 0) : 0,
       })
       .select()
       .single();
@@ -125,7 +126,7 @@ export default function AdminEmpresaDetalhe() {
       return;
     }
 
-    setFormObra({ nome: "", quadra_lote: "", endereco: "", terreno_valor: "", orcamento_total: "", venda_prevista: "" });
+    setFormObra({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "" });
     setMostrarNovaObra(false);
     carregar();
   };
@@ -272,6 +273,14 @@ export default function AdminEmpresaDetalhe() {
                 <label style={labelStyle}>Endereço</label>
                 <input value={formObra.endereco} onChange={(e) => setFormObra({ ...formObra, endereco: e.target.value })} style={inputStyle} />
               </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={labelStyle}>Objetivo da obra</label>
+                <select value={formObra.objetivo} onChange={(e) => setFormObra({ ...formObra, objetivo: e.target.value })} style={inputStyle}>
+                  {Object.entries(OBJETIVO_LABEL).map(([k, v]) => (
+                    <option key={k} value={k}>{v.icon} {v.label}</option>
+                  ))}
+                </select>
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                 <div>
                   <label style={labelStyle}>Terreno (R$)</label>
@@ -282,10 +291,12 @@ export default function AdminEmpresaDetalhe() {
                   <input type="number" value={formObra.orcamento_total} onChange={(e) => setFormObra({ ...formObra, orcamento_total: e.target.value })} style={inputStyle} />
                 </div>
               </div>
-              <div style={{ marginBottom: 14 }}>
-                <label style={labelStyle}>Venda prevista (R$)</label>
-                <input type="number" value={formObra.venda_prevista} onChange={(e) => setFormObra({ ...formObra, venda_prevista: e.target.value })} style={inputStyle} />
-              </div>
+              {formObra.objetivo === "venda" && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={labelStyle}>Venda prevista (R$)</label>
+                  <input type="number" value={formObra.venda_prevista} onChange={(e) => setFormObra({ ...formObra, venda_prevista: e.target.value })} style={inputStyle} />
+                </div>
+              )}
               {erroObra && <div style={{ fontSize: 12.5, color: COLORS.bad, marginBottom: 10 }}>{erroObra}</div>}
               <button type="submit" disabled={criandoObra} style={{ width: "100%", padding: 11, borderRadius: 8, border: "none", background: COLORS.action, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13.5 }}>
                 {criandoObra ? "Criando…" : "Criar obra"}

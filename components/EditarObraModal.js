@@ -77,16 +77,18 @@ export default function EditarObraModal({ obra, entries, onClose, onSave }) {
           <input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} style={inputStyle} />
         </div>
 
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>Status</label>
-          <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={inputStyle}>
-            {Object.entries(STATUS_OBRA_LABEL).map(([k, v]) => (
-              <option key={k} value={k}>{v.dot} {v.label}</option>
-            ))}
-          </select>
-        </div>
+        {obra.objetivo === "venda" && (
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Status</label>
+            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={inputStyle}>
+              {Object.entries(STATUS_OBRA_LABEL).map(([k, v]) => (
+                <option key={k} value={k}>{v.dot} {v.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
-        {form.status === "vendida" && (
+        {form.status === "vendida" && obra.objetivo === "venda" && (
           <div style={{ background: COLORS.actionSoft, borderRadius: 10, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text, marginBottom: 12 }}>Dados da venda</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
