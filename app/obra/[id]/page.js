@@ -8,6 +8,7 @@ import Sidebar from "../../../components/Sidebar";
 import Header from "../../../components/Header";
 import NovoLancamentoModal from "../../../components/NovoLancamentoModal";
 import EditarObraModal from "../../../components/EditarObraModal";
+import EditarLancamentoModal from "../../../components/EditarLancamentoModal";
 import VisaoGeral from "../../../components/VisaoGeral";
 import Gastos from "../../../components/Gastos";
 import Etapas from "../../../components/Etapas";
@@ -32,6 +33,7 @@ export default function ObraDashboard() {
   const [page, setPage] = useState("geral");
   const [showModal, setShowModal] = useState(false);
   const [showEditarObra, setShowEditarObra] = useState(false);
+  const [lancamentoEditando, setLancamentoEditando] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   async function carregarDados() {
@@ -129,6 +131,36 @@ export default function ObraDashboard() {
     carregarDados();
   };
 
+  const salvarEdicaoLancamento = async (form) => {
+    const { error } = await supabase
+      .from("lancamentos")
+      .update({
+        descricao: form.descricao,
+        valor: Number(form.valor),
+        etapa_id: form.etapa_id,
+        categoria: form.categoria,
+        fornecedor: form.fornecedor || null,
+        data: form.data,
+      })
+      .eq("id", lancamentoEditando.id);
+    if (error) {
+      setErro("Não foi possível salvar o lançamento: " + error.message);
+      return;
+    }
+    setLancamentoEditando(null);
+    carregarDados();
+  };
+
+  const excluirLancamento = async () => {
+    const { error } = await supabase.from("lancamentos").delete().eq("id", lancamentoEditando.id);
+    if (error) {
+      setErro("Não foi possível excluir o lançamento: " + error.message);
+      return;
+    }
+    setLancamentoEditando(null);
+    carregarDados();
+  };
+
   if (loading) {
     return (
       <div style={{ background: COLORS.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Manrope', system-ui, sans-serif", color: COLORS.textSoft }}>
@@ -192,7 +224,7 @@ export default function ObraDashboard() {
           )}
 
           {page === "geral" && <VisaoGeral obra={obra} stages={stages} entries={entries} />}
-          {page === "gastos" && <Gastos entries={entries} stages={stages} />}
+          {page === "gastos" && <Gastos entries={entries} stages={stages} onEditar={setLancamentoEditando} />}
           {page === "etapas" && <Etapas obra={obra} stages={stages} entries={entries} onUpdatePct={updatePct} />}
           {page === "fornecedores" && <Fornecedores entries={entries} />}
         </div>
@@ -204,6 +236,16 @@ export default function ObraDashboard() {
 
       {showEditarObra && obra && (
         <EditarObraModal obra={obra} entries={entries} onClose={() => setShowEditarObra(false)} onSave={salvarEdicaoObra} />
+      )}
+
+      {lancamentoEditando && (
+        <EditarLancamentoModal
+          lancamento={lancamentoEditando}
+          stages={stages}
+          onClose={() => setLancamentoEditando(null)}
+          onSave={salvarEdicaoLancamento}
+          onDelete={excluirLancamento}
+        />
       )}
     </div>
   );

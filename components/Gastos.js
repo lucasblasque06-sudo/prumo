@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { COLORS, fmtBRL, fmtDataLonga, CATEGORIA_LABEL, CARD_SHADOW, FONT_MONO } from "../lib/theme";
 import useIsMobile from "../lib/useIsMobile";
 
-export default function Gastos({ entries, stages }) {
+export default function Gastos({ entries, stages, onEditar }) {
   const [busca, setBusca] = useState("");
   const [filtroEtapa, setFiltroEtapa] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState("");
@@ -53,7 +53,7 @@ export default function Gastos({ entries, stages }) {
       {filtrados.length > 0 && isMobile && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {filtrados.map((e) => (
-            <div key={e.id} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "14px 16px", boxShadow: CARD_SHADOW }}>
+            <div key={e.id} onClick={() => onEditar(e)} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "14px 16px", boxShadow: CARD_SHADOW, cursor: "pointer" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text }}>{e.desc}</div>
                 <div style={{ fontWeight: 700, fontSize: 14.5, color: COLORS.text, whiteSpace: "nowrap", fontFamily: FONT_MONO }}>{fmtBRL(e.valor)}</div>
@@ -86,7 +86,7 @@ export default function Gastos({ entries, stages }) {
             ))}
           </div>
           {filtrados.map((e) => (
-            <div key={e.id} style={{ display: "grid", gridTemplateColumns: "90px 1.6fr 1fr 1fr 1fr 100px", padding: "13px 20px", borderBottom: `1px solid ${COLORS.border}`, alignItems: "center", fontSize: 13.5 }}>
+            <div key={e.id} onClick={() => onEditar(e)} style={{ display: "grid", gridTemplateColumns: "90px 1.6fr 1fr 1fr 1fr 100px", padding: "13px 20px", borderBottom: `1px solid ${COLORS.border}`, alignItems: "center", fontSize: 13.5, cursor: "pointer" }} className="hover-row">
               <div style={{ color: COLORS.textSoft, fontSize: 12.5 }}>{fmtDataLonga(e.data)}</div>
               <div style={{ fontWeight: 600, color: COLORS.text }}>{e.desc}</div>
               <div style={{ color: COLORS.textSoft }}>{e.stageName}</div>

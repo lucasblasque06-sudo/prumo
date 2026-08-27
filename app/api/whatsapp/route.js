@@ -174,6 +174,54 @@ async function extrairTextoPDF(buffer) {
     return "";
   }
 }
+
+// Extrai dados de um documento (texto de PDF de nota fiscal/guia) — diferente do texto livre de conversa,
+// aqui o texto tem várias medidas/números soltos e precisamos deixar claro qual é o valor de verdade
+async function extrairDeTextoDocumento(textoDocumento) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content:
+              "Você recebe o texto bruto extraído de um PDF de nota fiscal, guia ou recibo de construção civil brasileiro. " +
+              "O texto pode ter vários números soltos (metragem, datas, número de processo, CPF/CNPJ) — CUIDADO para não confundi-los com o valor a pagar. " +
+              "Responda APENAS com um JSON: " +
+              '{"valor": número ou null, "descricao": string ou null, "categoria": uma de "material","mao_de_obra","equipamento","taxas","outros" ou null, "fornecedor": string ou null, "etapa": string ou null}. ' +
+              "O 'valor' é APENAS o valor monetário total a pagar/documento (geralmente rotulado como 'Valor do Documento', 'Valor Total', 'Total a pagar' ou similar) — NUNCA metragem (m2), número de processo, CPF/CNPJ ou datas. " +
+              "A descrição deve resumir do que se trata (ex: 'Taxa de análise de projetos'). O fornecedor é quem emitiu o documento. " +
+              "Para 'etapa', escolha a mais provável entre: " + ETAPAS_CONHECIDAS.map((e) => `"${e}"`).join(", ") + ", ou null (taxas de prefeitura geralmente são 'Documentação / Taxas / Projetos'). " +
+              "Se não conseguir identificar um valor monetário real, retorne valor null.",
+          },
+          { role: "user", content: textoDocumento.slice(0, 4000) },
+        ],
+        max_tokens: 300,
+        temperature: 0,
+      }),
+    });
+    if (!resp.ok) {
+      console.error("Erro na API da OpenAI (documento):", resp.status, await resp.text());
+      return null;
+    }
+    const data = await resp.json();
+    const conteudo = data.choices?.[0]?.message?.content;
+    if (!conteudo) return null;
+    return JSON.parse(conteudo);
+  } catch (e) {
+    console.error("Erro ao processar texto de documento:", e);
+    return null;
+  }
+}
 async function extrairDeImagem(buffer, contentType) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
@@ -310,9 +358,9 @@ export async function POST(req) {
     );
   }
 
-  // Processa mídia (foto ou áudio), se houver
+  // Processa mídia (foto, áudio ou PDF), se houver
   let bodyRaw = bodyRaw0;
-  let extraidoDeImagem = null;
+  let extraidoDeMidia = null;
   const numMedia = parseInt(paramsObj["NumMedia"] || "0", 10);
   const mediaUrl = paramsObj["MediaUrl0"];
   const mediaType = paramsObj["MediaContentType0"] || "";
@@ -329,29 +377,30 @@ export async function POST(req) {
       }
       bodyRaw = (bodyRaw ? bodyRaw + " " : "") + textoTranscrito;
     } else if (mediaType.startsWith("image")) {
-      extraidoDeImagem = await extrairDeImagem(midia.buffer, midia.contentType);
-      if (!extraidoDeImagem || (!extraidoDeImagem.valor && !extraidoDeImagem.descricao)) {
+      extraidoDeMidia = await extrairDeImagem(midia.buffer, midia.contentType);
+      if (!extraidoDeMidia || (!extraidoDeMidia.valor && !extraidoDeMidia.descricao)) {
         return twiml("Não consegui ler os dados dessa imagem. Pode tentar uma foto mais nítida da nota, ou me contar o gasto em texto?");
       }
     } else if (mediaType === "application/pdf") {
       const textoPDF = await extrairTextoPDF(midia.buffer);
       if (textoPDF.length > 20) {
-        // PDF com texto de verdade (nota fiscal eletrônica): reaproveita o motor de texto livre
-        bodyRaw = (bodyRaw ? bodyRaw + " " : "") + textoPDF;
+        extraidoDeMidia = await extrairDeTextoDocumento(textoPDF);
+        if (!extraidoDeMidia || !extraidoDeMidia.valor) {
+          return twiml("Recebi o PDF e consegui ler o texto, mas não identifiquei com segurança o valor a pagar. Pode me confirmar o valor em texto?");
+        }
       } else {
-        // PDF sem texto extraível (provavelmente é uma imagem escaneada dentro do PDF)
         return twiml("Recebi o PDF, mas não consegui ler o conteúdo (parece ser uma imagem digitalizada, não texto). Pode tirar uma foto da nota em vez de mandar o PDF?");
       }
     }
   }
 
-  // 1ª tentativa: formato estruturado (pulado se já veio de foto)
-  let campos = extraidoDeImagem ? {} : parseCampos(bodyRaw);
-  let valor = extraidoDeImagem ? extraidoDeImagem.valor : parseValor(campos["valor"]);
-  let descricao = extraidoDeImagem ? extraidoDeImagem.descricao : (campos["desc"] || campos["descricao"]);
-  let categoria = extraidoDeImagem ? extraidoDeImagem.categoria : campos["categoria"];
-  let fornecedor = extraidoDeImagem ? extraidoDeImagem.fornecedor : campos["fornecedor"];
-  let etapa = extraidoDeImagem ? extraidoDeImagem.etapa : campos["etapa"];
+  // 1ª tentativa: formato estruturado (pulado se já veio de foto/PDF)
+  let campos = extraidoDeMidia ? {} : parseCampos(bodyRaw);
+  let valor = extraidoDeMidia ? extraidoDeMidia.valor : parseValor(campos["valor"]);
+  let descricao = extraidoDeMidia ? extraidoDeMidia.descricao : (campos["desc"] || campos["descricao"]);
+  let categoria = extraidoDeMidia ? extraidoDeMidia.categoria : campos["categoria"];
+  let fornecedor = extraidoDeMidia ? extraidoDeMidia.fornecedor : campos["fornecedor"];
+  let etapa = extraidoDeMidia ? extraidoDeMidia.etapa : campos["etapa"];
   let obraTexto = campos["obra"];
 
   // Rascunho de uma pergunta anterior do bot (ex: "qual obra?")
@@ -378,8 +427,8 @@ export async function POST(req) {
     }
   }
 
-  // 2ª tentativa: texto livre via IA (pula se já veio de uma foto)
-  if (!extraidoDeImagem && !valor && !descricao) {
+  // 2ª tentativa: texto livre via IA (pula se já veio de uma foto/PDF)
+  if (!extraidoDeMidia && !valor && !descricao) {
     const extraido = await extrairComIA(bodyRaw);
     if (extraido) {
       valor = valor || extraido.valor;
