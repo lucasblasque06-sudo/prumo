@@ -32,7 +32,7 @@ export default function AdminEmpresaDetalhe() {
   const [msgConvite, setMsgConvite] = useState(null);
 
   const [mostrarNovaObra, setMostrarNovaObra] = useState(false);
-  const [formObra, setFormObra] = useState({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "" });
+  const [formObra, setFormObra] = useState({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "", definirOrcadoPorEtapa: false });
   const [criandoObra, setCriandoObra] = useState(false);
   const [erroObra, setErroObra] = useState(null);
 
@@ -119,7 +119,7 @@ export default function AdminEmpresaDetalhe() {
     const etapasParaInserir = ETAPAS_PADRAO.map((et) => ({
       obra_id: obra.id,
       nome: et.nome,
-      percentual_orcamento: et.pct,
+      percentual_orcamento: formObra.definirOrcadoPorEtapa ? et.pct : null,
       ordem: et.ordem,
     }));
     const { error: e2 } = await supabase.from("etapas").insert(etapasParaInserir);
@@ -301,6 +301,15 @@ export default function AdminEmpresaDetalhe() {
                   <input type="number" value={formObra.venda_prevista} onChange={(e) => setFormObra({ ...formObra, venda_prevista: e.target.value })} style={inputStyle} />
                 </div>
               )}
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", marginBottom: 14, fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={formObra.definirOrcadoPorEtapa}
+                  onChange={(e) => setFormObra({ ...formObra, definirOrcadoPorEtapa: e.target.checked })}
+                  style={{ marginTop: 2 }}
+                />
+                <span>Já definir % de orçamento por etapa (senão fica sem orçamento pré-definido, só acompanhando gasto)</span>
+              </label>
               {erroObra && <div style={{ fontSize: 12.5, color: COLORS.bad, marginBottom: 10 }}>{erroObra}</div>}
               <button type="submit" disabled={criandoObra} style={{ width: "100%", padding: 11, borderRadius: 8, border: "none", background: COLORS.action, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13.5 }}>
                 {criandoObra ? "Criando…" : "Criar obra"}

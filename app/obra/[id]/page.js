@@ -67,7 +67,7 @@ export default function ObraDashboard() {
       const nomeEtapa = (id) => etapasData.find((s) => s.id === id)?.nome ?? id;
 
       setObra(obraData);
-      setStages(etapasData.map((e) => ({ id: e.id, nome: e.nome, pct: Number(e.percentual_orcamento) })));
+      setStages(etapasData.map((e) => ({ id: e.id, nome: e.nome, pct: e.percentual_orcamento === null ? null : Number(e.percentual_orcamento) })));
       setEntries(
         lancamentosData.map((l) => ({
           id: l.id,

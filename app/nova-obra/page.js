@@ -17,7 +17,7 @@ const ETAPAS_PADRAO = [
 ];
 
 export default function NovaObraPage() {
-  const [form, setForm] = useState({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "" });
+  const [form, setForm] = useState({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "", definirOrcadoPorEtapa: false });
   const [empresaId, setEmpresaId] = useState(null);
   const [erro, setErro] = useState(null);
   const [salvando, setSalvando] = useState(false);
@@ -71,7 +71,7 @@ export default function NovaObraPage() {
     const etapasParaInserir = ETAPAS_PADRAO.map((et) => ({
       obra_id: obra.id,
       nome: et.nome,
-      percentual_orcamento: et.pct,
+      percentual_orcamento: form.definirOrcadoPorEtapa ? et.pct : null,
       ordem: et.ordem,
     }));
     const { error: e2 } = await supabase.from("etapas").insert(etapasParaInserir);
@@ -100,7 +100,7 @@ export default function NovaObraPage() {
 
       <div style={{ maxWidth: 520, margin: "0 auto", padding: "28px 16px" }}>
         <div style={{ fontSize: 20, fontWeight: 800, color: COLORS.text, marginBottom: 6 }}>Nova obra</div>
-        <div style={{ fontSize: 13, color: COLORS.textSoft, marginBottom: 24 }}>As 9 etapas padrão já entram configuradas — você pode ajustar depois</div>
+        <div style={{ fontSize: 13, color: COLORS.textSoft, marginBottom: 24 }}>As 10 etapas padrão já entram configuradas — você decide se quer planejar o orçamento por etapa desde já</div>
 
         <form onSubmit={salvar} style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 24, boxShadow: CARD_SHADOW }}>
           <div style={{ marginBottom: 14 }}>
@@ -139,6 +139,23 @@ export default function NovaObraPage() {
               <input type="number" placeholder="0" value={form.venda_prevista} onChange={(e) => setForm({ ...form, venda_prevista: e.target.value })} style={inputStyle} />
             </div>
           )}
+
+          <div style={{ background: COLORS.bg, borderRadius: 10, padding: 14, marginBottom: 20 }}>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={form.definirOrcadoPorEtapa}
+                onChange={(e) => setForm({ ...form, definirOrcadoPorEtapa: e.target.checked })}
+                style={{ marginTop: 3 }}
+              />
+              <span style={{ fontSize: 12.5, color: COLORS.text }}>
+                <strong>Já quero planejar quanto vai pra cada etapa</strong> (% do orçamento)
+                <div style={{ color: COLORS.textSoft, fontSize: 11.5, marginTop: 3, lineHeight: 1.4 }}>
+                  As etapas sempre existem pra você organizar os gastos. Isso aqui é só se você já sabe, por exemplo, "18% vai pra Estrutura" — se deixar desmarcado, as etapas entram sem orçamento pré-definido, e você só acompanha quanto já gastou em cada uma, sem comparar com uma previsão. Dá pra mudar isso depois, a qualquer momento.
+                </div>
+              </span>
+            </label>
+          </div>
 
           {erro && <div style={{ fontSize: 12.5, color: COLORS.bad, marginBottom: 14 }}>{erro}</div>}
 
