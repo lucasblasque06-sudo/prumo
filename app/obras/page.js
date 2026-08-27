@@ -8,44 +8,60 @@ export default function ObrasPage() {
   const [empresa, setEmpresa] = useState(null);
   const [obras, setObras] = useState([]);
   const [erro, setErro] = useState(null);
+  const [excluindoId, setExcluindoId] = useState(null);
+
+  async function carregar() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const { data: vinculo, error: e1 } = await supabase
+      .from("usuarios_empresas")
+      .select("empresa_id, empresas(*)")
+      .eq("user_id", user.id)
+      .single();
+
+    if (e1 || !vinculo) {
+      setErro("Sua conta ainda não está vinculada a nenhuma empresa.");
+      setLoading(false);
+      return;
+    }
+
+    setEmpresa(vinculo.empresas);
+
+    const { data: obrasData, error: e2 } = await supabase
+      .from("obras")
+      .select("*")
+      .eq("empresa_id", vinculo.empresa_id)
+      .order("criado_em", { ascending: false });
+
+    if (e2) {
+      setErro(e2.message);
+    } else {
+      setObras(obrasData);
+    }
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function carregar() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        window.location.href = "/login";
-        return;
-      }
-
-      const { data: vinculo, error: e1 } = await supabase
-        .from("usuarios_empresas")
-        .select("empresa_id, empresas(*)")
-        .eq("user_id", user.id)
-        .single();
-
-      if (e1 || !vinculo) {
-        setErro("Sua conta ainda não está vinculada a nenhuma empresa.");
-        setLoading(false);
-        return;
-      }
-
-      setEmpresa(vinculo.empresas);
-
-      const { data: obrasData, error: e2 } = await supabase
-        .from("obras")
-        .select("*")
-        .eq("empresa_id", vinculo.empresa_id)
-        .order("criado_em", { ascending: false });
-
-      if (e2) {
-        setErro(e2.message);
-      } else {
-        setObras(obrasData);
-      }
-      setLoading(false);
-    }
     carregar();
   }, []);
+
+  const excluirObra = async (e, obraId, nomeObra) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm(`Tem certeza que quer excluir a obra "${nomeObra}"? Isso apaga TODOS os lançamentos e etapas dela. Essa ação não pode ser desfeita.`)) return;
+    setExcluindoId(obraId);
+    const { error } = await supabase.from("obras").delete().eq("id", obraId);
+    setExcluindoId(null);
+    if (error) {
+      alert("Não foi possível excluir a obra: " + error.message);
+      return;
+    }
+    carregar();
+  };
 
   const sair = async () => {
     await supabase.auth.signOut();
@@ -108,9 +124,17 @@ export default function ObrasPage() {
               <a
                 key={o.id}
                 href={`/obra/${o.id}`}
-                style={{ display: "block", background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "18px 22px", textDecoration: "none", boxShadow: CARD_SHADOW, transition: "border-color 0.15s ease" }}
+                style={{ display: "block", background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "18px 22px", textDecoration: "none", boxShadow: CARD_SHADOW, transition: "border-color 0.15s ease", position: "relative" }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <button
+                  onClick={(e) => excluirObra(e, o.id, o.nome)}
+                  disabled={excluindoId === o.id}
+                  title="Excluir obra"
+                  style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", color: COLORS.textSoft, cursor: "pointer", fontSize: 13, padding: 4, lineHeight: 1 }}
+                >
+                  {excluindoId === o.id ? "…" : "🗑"}
+                </button>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingRight: 28 }}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 15, color: COLORS.text }}>
                       {o.nome}{o.quadra_lote ? ` - ${o.quadra_lote}` : ""}
