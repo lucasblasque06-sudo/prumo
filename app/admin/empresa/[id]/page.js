@@ -76,14 +76,18 @@ export default function AdminEmpresaDetalhe() {
     e.preventDefault();
     setEnviandoConvite(true);
     setMsgConvite(null);
-    const { error } = await supabase.from("convites").insert({ empresa_id: empresaId, email: emailConvite.trim() });
+    const { data, error } = await supabase.rpc("admin_convidar_por_email", { p_empresa_id: empresaId, p_email: emailConvite.trim() });
     setEnviandoConvite(false);
     if (error) {
-      setMsgConvite({ tipo: "erro", texto: error.message.includes("duplicate") ? "Já existe um convite pendente para esse e-mail." : "Erro ao criar convite." });
+      setMsgConvite({ tipo: "erro", texto: "Erro ao processar convite." });
       return;
     }
-    setMsgConvite({ tipo: "ok", texto: `Convite criado! Quando ${emailConvite} se cadastrar em /cadastro, entra automaticamente nesta empresa.` });
-    setEmailConvite("");
+    const deuCerto = data?.includes("adicionado") || data?.includes("Convite criado");
+    setMsgConvite({ tipo: deuCerto ? "ok" : "erro", texto: data });
+    if (deuCerto) {
+      setEmailConvite("");
+      carregar();
+    }
   };
 
   const criarObra = async (e) => {
