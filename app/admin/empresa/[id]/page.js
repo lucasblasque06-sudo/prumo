@@ -32,9 +32,10 @@ export default function AdminEmpresaDetalhe() {
   const [msgConvite, setMsgConvite] = useState(null);
 
   const [mostrarNovaObra, setMostrarNovaObra] = useState(false);
-  const [formObra, setFormObra] = useState({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "", definirOrcadoPorEtapa: false });
+  const [formObra, setFormObra] = useState({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "", definirOrcadoPorEtapa: null });
   const [criandoObra, setCriandoObra] = useState(false);
   const [erroObra, setErroObra] = useState(null);
+  const [tentouSemEscolherObra, setTentouSemEscolherObra] = useState(false);
 
   const [obraEditando, setObraEditando] = useState(null);
   const [formEdicao, setFormEdicao] = useState({});
@@ -92,6 +93,10 @@ export default function AdminEmpresaDetalhe() {
 
   const criarObra = async (e) => {
     e.preventDefault();
+    if (formObra.definirOrcadoPorEtapa === null) {
+      setTentouSemEscolherObra(true);
+      return;
+    }
     setCriandoObra(true);
     setErroObra(null);
 
@@ -130,7 +135,8 @@ export default function AdminEmpresaDetalhe() {
       return;
     }
 
-    setFormObra({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "" });
+    setFormObra({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "", definirOrcadoPorEtapa: null });
+    setTentouSemEscolherObra(false);
     setMostrarNovaObra(false);
     carregar();
   };
@@ -301,15 +307,34 @@ export default function AdminEmpresaDetalhe() {
                   <input type="number" value={formObra.venda_prevista} onChange={(e) => setFormObra({ ...formObra, venda_prevista: e.target.value })} style={inputStyle} />
                 </div>
               )}
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", marginBottom: 14, fontSize: 12 }}>
-                <input
-                  type="checkbox"
-                  checked={formObra.definirOrcadoPorEtapa}
-                  onChange={(e) => setFormObra({ ...formObra, definirOrcadoPorEtapa: e.target.checked })}
-                  style={{ marginTop: 2 }}
-                />
-                <span>Já definir orçamento por etapa em R$ (senão fica sem orçamento pré-definido, só acompanhando gasto)</span>
-              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+                <div
+                  onClick={() => { setFormObra({ ...formObra, definirOrcadoPorEtapa: true }); setTentouSemEscolherObra(false); }}
+                  style={{
+                    cursor: "pointer",
+                    borderRadius: 8,
+                    padding: 10,
+                    border: `2px solid ${formObra.definirOrcadoPorEtapa === true ? COLORS.action : (tentouSemEscolherObra ? COLORS.bad : COLORS.border)}`,
+                    background: formObra.definirOrcadoPorEtapa === true ? COLORS.actionSoft : COLORS.paper,
+                  }}
+                >
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: formObra.definirOrcadoPorEtapa === true ? COLORS.action : COLORS.text }}>Definir por etapa</div>
+                  <div style={{ fontSize: 10.5, color: COLORS.textSoft, marginTop: 2 }}>Planeja R$ por etapa</div>
+                </div>
+                <div
+                  onClick={() => { setFormObra({ ...formObra, definirOrcadoPorEtapa: false }); setTentouSemEscolherObra(false); }}
+                  style={{
+                    cursor: "pointer",
+                    borderRadius: 8,
+                    padding: 10,
+                    border: `2px solid ${formObra.definirOrcadoPorEtapa === false ? COLORS.action : (tentouSemEscolherObra ? COLORS.bad : COLORS.border)}`,
+                    background: formObra.definirOrcadoPorEtapa === false ? COLORS.actionSoft : COLORS.paper,
+                  }}
+                >
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: formObra.definirOrcadoPorEtapa === false ? COLORS.action : COLORS.text }}>Só acompanhar gastos</div>
+                  <div style={{ fontSize: 10.5, color: COLORS.textSoft, marginTop: 2 }}>Sem orçamento pré-definido</div>
+                </div>
+              </div>
               {erroObra && <div style={{ fontSize: 12.5, color: COLORS.bad, marginBottom: 10 }}>{erroObra}</div>}
               <button type="submit" disabled={criandoObra} style={{ width: "100%", padding: 11, borderRadius: 8, border: "none", background: COLORS.action, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13.5 }}>
                 {criandoObra ? "Criando…" : "Criar obra"}

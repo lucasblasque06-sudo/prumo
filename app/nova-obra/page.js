@@ -17,11 +17,12 @@ const ETAPAS_PADRAO = [
 ];
 
 export default function NovaObraPage() {
-  const [form, setForm] = useState({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "", definirOrcadoPorEtapa: false });
+  const [form, setForm] = useState({ nome: "", quadra_lote: "", endereco: "", objetivo: "venda", terreno_valor: "", orcamento_total: "", venda_prevista: "", definirOrcadoPorEtapa: null });
   const [empresaId, setEmpresaId] = useState(null);
   const [erro, setErro] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [tentouSemEscolher, setTentouSemEscolher] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -44,6 +45,10 @@ export default function NovaObraPage() {
   const salvar = async (e) => {
     e.preventDefault();
     if (!empresaId) return;
+    if (form.definirOrcadoPorEtapa === null) {
+      setTentouSemEscolher(true);
+      return;
+    }
     setSalvando(true);
     setErro(null);
 
@@ -140,21 +145,45 @@ export default function NovaObraPage() {
             </div>
           )}
 
-          <div style={{ background: COLORS.bg, borderRadius: 10, padding: 14, marginBottom: 20 }}>
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={form.definirOrcadoPorEtapa}
-                onChange={(e) => setForm({ ...form, definirOrcadoPorEtapa: e.target.checked })}
-                style={{ marginTop: 3 }}
-              />
-              <span style={{ fontSize: 12.5, color: COLORS.text }}>
-                <strong>Já quero planejar quanto vai pra cada etapa</strong> (em R$)
-                <div style={{ color: COLORS.textSoft, fontSize: 11.5, marginTop: 3, lineHeight: 1.4 }}>
-                  As etapas sempre existem pra você organizar os gastos. Isso aqui é só se você já sabe, por exemplo, "18% vai pra Estrutura" — se deixar desmarcado, as etapas entram sem orçamento pré-definido, e você só acompanha quanto já gastou em cada uma, sem comparar com uma previsão. Dá pra mudar isso depois, a qualquer momento.
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div
+                onClick={() => { setForm({ ...form, definirOrcadoPorEtapa: true }); setTentouSemEscolher(false); }}
+                style={{
+                  cursor: "pointer",
+                  borderRadius: 10,
+                  padding: 14,
+                  border: `2px solid ${form.definirOrcadoPorEtapa === true ? COLORS.action : (tentouSemEscolher ? COLORS.bad : COLORS.border)}`,
+                  background: form.definirOrcadoPorEtapa === true ? COLORS.actionSoft : COLORS.bg,
+                  transition: "border-color 0.15s ease",
+                }}
+              >
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: form.definirOrcadoPorEtapa === true ? COLORS.action : COLORS.text, marginBottom: 4 }}>
+                  Definir orçamento por etapa
                 </div>
-              </span>
-            </label>
+                <div style={{ fontSize: 11.5, color: COLORS.textSoft, lineHeight: 1.4 }}>
+                  Planeja quanto (em R$) vai pra cada etapa desde já
+                </div>
+              </div>
+              <div
+                onClick={() => { setForm({ ...form, definirOrcadoPorEtapa: false }); setTentouSemEscolher(false); }}
+                style={{
+                  cursor: "pointer",
+                  borderRadius: 10,
+                  padding: 14,
+                  border: `2px solid ${form.definirOrcadoPorEtapa === false ? COLORS.action : (tentouSemEscolher ? COLORS.bad : COLORS.border)}`,
+                  background: form.definirOrcadoPorEtapa === false ? COLORS.actionSoft : COLORS.bg,
+                  transition: "border-color 0.15s ease",
+                }}
+              >
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: form.definirOrcadoPorEtapa === false ? COLORS.action : COLORS.text, marginBottom: 4 }}>
+                  Somente acompanhar os gastos
+                </div>
+                <div style={{ fontSize: 11.5, color: COLORS.textSoft, lineHeight: 1.4 }}>
+                  Sem orçamento pré-definido — dá pra adicionar depois, etapa por etapa
+                </div>
+              </div>
+            </div>
           </div>
 
           {erro && <div style={{ fontSize: 12.5, color: COLORS.bad, marginBottom: 14 }}>{erro}</div>}
