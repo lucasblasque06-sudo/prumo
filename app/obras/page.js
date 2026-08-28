@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { COLORS, fmtBRL, STATUS_OBRA_LABEL, CARD_SHADOW, FONT_MONO } from "../../lib/theme";
+import EditarObraModal from "../../components/EditarObraModal";
 
 export default function ObrasPage() {
   const [loading, setLoading] = useState(true);
@@ -9,6 +10,8 @@ export default function ObrasPage() {
   const [obras, setObras] = useState([]);
   const [erro, setErro] = useState(null);
   const [excluindoId, setExcluindoId] = useState(null);
+  const [obraEditando, setObraEditando] = useState(null);
+  const [entriesEditando, setEntriesEditando] = useState([]);
 
   async function carregar() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -60,6 +63,31 @@ export default function ObrasPage() {
       alert("Não foi possível excluir a obra: " + error.message);
       return;
     }
+    carregar();
+  };
+
+  const abrirEdicao = async (e, obra) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Busca o gasto real da obra para o cálculo de lucro no modal ficar correto
+    const { data: etapasData } = await supabase.from("etapas").select("id").eq("obra_id", obra.id);
+    const etapaIds = (etapasData || []).map((et) => et.id);
+    let totalGasto = 0;
+    if (etapaIds.length > 0) {
+      const { data: lancamentosData } = await supabase.from("lancamentos").select("valor").in("etapa_id", etapaIds);
+      totalGasto = (lancamentosData || []).reduce((a, l) => a + Number(l.valor), 0);
+    }
+    setEntriesEditando(totalGasto > 0 ? [{ valor: totalGasto }] : []);
+    setObraEditando(obra);
+  };
+
+  const salvarEdicao = async (payload) => {
+    const { error } = await supabase.from("obras").update(payload).eq("id", obraEditando.id);
+    if (error) {
+      alert("Não foi possível salvar: " + error.message);
+      return;
+    }
+    setObraEditando(null);
     carregar();
   };
 
@@ -126,15 +154,24 @@ export default function ObrasPage() {
                 href={`/obra/${o.id}`}
                 style={{ display: "block", background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "18px 22px", textDecoration: "none", boxShadow: CARD_SHADOW, transition: "border-color 0.15s ease", position: "relative" }}
               >
-                <button
-                  onClick={(e) => excluirObra(e, o.id, o.nome)}
-                  disabled={excluindoId === o.id}
-                  title="Excluir obra"
-                  style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", color: COLORS.textSoft, cursor: "pointer", fontSize: 13, padding: 4, lineHeight: 1 }}
-                >
-                  {excluindoId === o.id ? "…" : "🗑"}
-                </button>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingRight: 28 }}>
+                <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 4 }}>
+                  <button
+                    onClick={(e) => abrirEdicao(e, o)}
+                    title="Editar obra"
+                    style={{ background: "none", border: "none", color: COLORS.textSoft, cursor: "pointer", fontSize: 16, padding: 6, lineHeight: 1, borderRadius: 6 }}
+                  >
+                    ✎
+                  </button>
+                  <button
+                    onClick={(e) => excluirObra(e, o.id, o.nome)}
+                    disabled={excluindoId === o.id}
+                    title="Excluir obra"
+                    style={{ background: "none", border: "none", color: COLORS.textSoft, cursor: "pointer", fontSize: 16, padding: 6, lineHeight: 1, borderRadius: 6 }}
+                  >
+                    {excluindoId === o.id ? "…" : "🗑"}
+                  </button>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingRight: 56 }}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 15, color: COLORS.text }}>
                       {o.nome}{o.quadra_lote ? ` - ${o.quadra_lote}` : ""}
@@ -155,6 +192,15 @@ export default function ObrasPage() {
           })}
         </div>
       </div>
+
+      {obraEditando && (
+        <EditarObraModal
+          obra={obraEditando}
+          entries={entriesEditando}
+          onClose={() => setObraEditando(null)}
+          onSave={salvarEdicao}
+        />
+      )}
     </div>
   );
 }
