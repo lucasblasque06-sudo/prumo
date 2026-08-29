@@ -42,6 +42,8 @@ export default function AdminEmpresaDetalhe() {
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
   const [excluindoObraId, setExcluindoObraId] = useState(null);
   const [removendoMembroId, setRemovendoMembroId] = useState(null);
+  const [convitesPendentes, setConvitesPendentes] = useState([]);
+  const [cancelandoConviteId, setCancelandoConviteId] = useState(null);
 
   async function carregar() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -62,6 +64,9 @@ export default function AdminEmpresaDetalhe() {
     const { data: membrosData } = await supabase.rpc("admin_listar_membros", { p_empresa_id: empresaId });
     setMembros(membrosData || []);
 
+    const { data: convitesData } = await supabase.from("convites").select("*").eq("empresa_id", empresaId).eq("aceito", false).order("criado_em", { ascending: false });
+    setConvitesPendentes(convitesData || []);
+
     const { data: obrasData } = await supabase.from("obras").select("*").eq("empresa_id", empresaId).order("criado_em", { ascending: false });
     setObras(obrasData || []);
 
@@ -72,6 +77,17 @@ export default function AdminEmpresaDetalhe() {
     if (empresaId) carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [empresaId]);
+
+  const cancelarConvite = async (conviteId) => {
+    setCancelandoConviteId(conviteId);
+    const { error } = await supabase.from("convites").delete().eq("id", conviteId);
+    setCancelandoConviteId(null);
+    if (error) {
+      alert("Não foi possível cancelar: " + error.message);
+      return;
+    }
+    carregar();
+  };
 
   const enviarConvite = async (e) => {
     e.preventDefault();
@@ -255,6 +271,29 @@ export default function AdminEmpresaDetalhe() {
             </button>
           </form>
           {msgConvite && <div style={{ marginTop: 8, fontSize: 12.5, color: msgConvite.tipo === "ok" ? COLORS.good : COLORS.bad }}>{msgConvite.texto}</div>}
+
+          {convitesPendentes.length > 0 && (
+            <div style={{ marginTop: 16, borderTop: `1px solid ${COLORS.border}`, paddingTop: 14 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textSoft, textTransform: "uppercase", marginBottom: 10 }}>
+                Convites aguardando cadastro ({convitesPendentes.length})
+              </div>
+              {convitesPendentes.map((c) => (
+                <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", fontSize: 12.5 }}>
+                  <div style={{ color: COLORS.text }}>{c.email}</div>
+                  <button
+                    onClick={() => cancelarConvite(c.id)}
+                    disabled={cancelandoConviteId === c.id}
+                    style={{ background: "none", border: "none", color: COLORS.bad, cursor: "pointer", fontSize: 11.5, fontWeight: 600 }}
+                  >
+                    {cancelandoConviteId === c.id ? "…" : "Cancelar convite"}
+                  </button>
+                </div>
+              ))}
+              <div style={{ fontSize: 11, color: COLORS.textSoft, marginTop: 6 }}>
+                Nenhum e-mail é enviado automaticamente — avise a pessoa para criar a conta em <strong>/cadastro</strong> com esse e-mail.
+              </div>
+            </div>
+          )}
         </div>
 
         {/* OBRAS */}
