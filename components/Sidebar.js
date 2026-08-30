@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { COLORS } from "../lib/theme";
 import { supabase } from "../lib/supabase";
+import EditarPerfilModal from "./EditarPerfilModal";
 
 const NAV = [
   {
@@ -29,12 +30,7 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
   const [perfil, setPerfil] = useState(null);
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState(null);
-  const [editandoNome, setEditandoNome] = useState(false);
-  const [nomeEdit, setNomeEdit] = useState("");
-  const [salvandoNome, setSalvandoNome] = useState(false);
-  const [editandoTel, setEditandoTel] = useState(false);
-  const [telEdit, setTelEdit] = useState("");
-  const [salvandoTel, setSalvandoTel] = useState(false);
+  const [editandoPerfil, setEditandoPerfil] = useState(false);
 
   useEffect(() => {
     async function carregarPerfil() {
@@ -43,39 +39,10 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
       setEmail(user.email || "");
       setUserId(user.id);
       const { data } = await supabase.from("perfis").select("nome, foto_url, telefone").eq("user_id", user.id).single();
-      if (data) {
-        setPerfil(data);
-        setNomeEdit(data.nome || "");
-        setTelEdit(data.telefone || "");
-      }
+      if (data) setPerfil(data);
     }
     carregarPerfil();
   }, []);
-
-  const salvarNome = async () => {
-    if (!userId) return;
-    setSalvandoNome(true);
-    const novoNome = nomeEdit.trim();
-    const { error } = await supabase.from("perfis").upsert({ user_id: userId, nome: novoNome || null }, { onConflict: "user_id" });
-    setSalvandoNome(false);
-    if (!error) {
-      setPerfil((prev) => ({ ...(prev || {}), nome: novoNome }));
-      setEditandoNome(false);
-    }
-  };
-
-  const salvarTelefone = async () => {
-    if (!userId) return;
-    setSalvandoTel(true);
-    const digitos = telEdit.replace(/[^\d]/g, "");
-    const { error } = await supabase.from("perfis").upsert({ user_id: userId, telefone: digitos || null }, { onConflict: "user_id" });
-    setSalvandoTel(false);
-    if (!error) {
-      setPerfil((prev) => ({ ...(prev || {}), telefone: digitos }));
-      setTelEdit(digitos);
-      setEditandoTel(false);
-    }
-  };
 
   return (
     <>
@@ -186,54 +153,35 @@ export default function Sidebar({ active, onNavigate, obraNome, open, onClose })
               )}
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              {editandoNome ? (
-                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                  <input
-                    autoFocus
-                    value={nomeEdit}
-                    onChange={(e) => setNomeEdit(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") salvarNome(); if (e.key === "Escape") { setEditandoNome(false); setNomeEdit(perfil?.nome || ""); } }}
-                    style={{ width: "100%", fontSize: 12.5, padding: "3px 6px", borderRadius: 5, border: `1px solid ${COLORS.sidebarHover}`, background: COLORS.sidebar, color: COLORS.sidebarTextActive }}
-                  />
-                  <button onClick={salvarNome} disabled={salvandoNome} style={{ background: "none", border: "none", color: COLORS.action, cursor: "pointer", fontSize: 13, padding: 2 }} title="Salvar">✓</button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => setEditandoNome(true)}
-                  style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.sidebarTextActive, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer" }}
-                  title="Clique para editar o nome"
-                >
-                  {perfil?.nome || "Usuário"} <span style={{ opacity: 0.5, fontSize: 10.5 }}>✎</span>
-                </div>
-              )}
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.sidebarTextActive, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {perfil?.nome || "Usuário"}
+              </div>
               <div style={{ fontSize: 11, color: COLORS.sidebarText, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {email}
               </div>
-              {editandoTel ? (
-                <div style={{ display: "flex", gap: 4, alignItems: "center", marginTop: 3 }}>
-                  <input
-                    autoFocus
-                    placeholder="5519999999999"
-                    value={telEdit}
-                    onChange={(e) => setTelEdit(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") salvarTelefone(); if (e.key === "Escape") { setEditandoTel(false); setTelEdit(perfil?.telefone || ""); } }}
-                    style={{ width: "100%", fontSize: 11.5, padding: "3px 6px", borderRadius: 5, border: `1px solid ${COLORS.sidebarHover}`, background: COLORS.sidebar, color: COLORS.sidebarTextActive }}
-                  />
-                  <button onClick={salvarTelefone} disabled={salvandoTel} style={{ background: "none", border: "none", color: COLORS.action, cursor: "pointer", fontSize: 13, padding: 2 }} title="Salvar">✓</button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => setEditandoTel(true)}
-                  style={{ fontSize: 11, color: COLORS.sidebarText, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer", marginTop: 3 }}
-                  title="Clique para editar o WhatsApp"
-                >
-                  {perfil?.telefone ? `WhatsApp: ${perfil.telefone}` : "+ Vincular WhatsApp"} <span style={{ opacity: 0.5, fontSize: 10 }}>✎</span>
-                </div>
-              )}
+              <div style={{ fontSize: 11, color: COLORS.sidebarText, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>
+                {perfil?.telefone ? `WhatsApp: ${perfil.telefone}` : "WhatsApp não vinculado"}
+              </div>
             </div>
+            <button
+              onClick={() => setEditandoPerfil(true)}
+              title="Editar perfil"
+              style={{ background: "none", border: "none", color: COLORS.sidebarText, cursor: "pointer", fontSize: 14, padding: 4, flexShrink: 0 }}
+            >
+              ✎
+            </button>
           </div>
         )}
       </div>
+
+      {editandoPerfil && (
+        <EditarPerfilModal
+          userId={userId}
+          perfilAtual={perfil}
+          onClose={() => setEditandoPerfil(false)}
+          onSaved={(novoPerfil) => { setPerfil((prev) => ({ ...(prev || {}), ...novoPerfil })); setEditandoPerfil(false); }}
+        />
+      )}
     </>
   );
 }

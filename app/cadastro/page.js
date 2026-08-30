@@ -27,7 +27,15 @@ export default function CadastroPage() {
     e.preventDefault();
     setErro(null);
     setCarregando(true);
-    const { data, error } = await supabase.auth.signUp({ email, password: senha });
+    const telefoneDigitos = whatsapp.replace(/[^\d]/g, "");
+
+    // nome e telefone vão como metadata da própria conta — isso garante que sejam
+    // salvos mesmo quando a confirmação de e-mail atrasa a criação da sessão
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: senha,
+      options: { data: { nome: nome || null, telefone: telefoneDigitos || null } },
+    });
     if (error) {
       setCarregando(false);
       setErro(error.message.includes("already") ? "Já existe uma conta com esse e-mail." : "Não foi possível criar a conta.");
@@ -36,28 +44,14 @@ export default function CadastroPage() {
 
     const userId = data.user?.id;
     let fotoUrl = null;
-    if (userId && foto) {
+    if (userId && foto && data.session) {
       const ext = foto.name.split(".").pop();
       const path = `${userId}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("avatars").upload(path, foto, { upsert: true });
       if (!uploadError) {
         const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
         fotoUrl = pub.publicUrl;
-      }
-    }
-
-    if (userId) {
-      const telefoneDigitos = whatsapp.replace(/[^\d]/g, "");
-      const { error: erroPerfil } = await supabase.from("perfis").insert({
-        user_id: userId,
-        nome: nome || null,
-        foto_url: fotoUrl,
-        telefone: telefoneDigitos || null,
-      });
-      if (erroPerfil && erroPerfil.message.includes("duplicate") && telefoneDigitos) {
-        // Telefone já usado por outra conta — cria o perfil sem o telefone pra não travar o cadastro
-        await supabase.from("perfis").insert({ user_id: userId, nome: nome || null, foto_url: fotoUrl });
-        setAvisoTelefoneDuplicado(true);
+        await supabase.from("perfis").update({ foto_url: fotoUrl }).eq("user_id", userId);
       }
     }
 
