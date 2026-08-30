@@ -127,6 +127,9 @@ export default function LoginPage() {
         >
           {carregando ? "Entrando…" : "Entrar"}
         </button>
+        <a href="/cadastro" style={{ display: "block", textAlign: "center", marginTop: 14, fontSize: 12.5, color: COLORS.textSoft, textDecoration: "none" }}>
+          Não tem conta? <span style={{ color: COLORS.action, fontWeight: 600 }}>Criar conta</span>
+        </a>
       </form>
     </div>
   );

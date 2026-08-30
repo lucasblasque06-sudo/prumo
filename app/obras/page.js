@@ -3,15 +3,18 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { COLORS, fmtBRL, STATUS_OBRA_LABEL, CARD_SHADOW, FONT_MONO } from "../../lib/theme";
 import EditarObraModal from "../../components/EditarObraModal";
+import ConfirmModal from "../../components/ConfirmModal";
 
 export default function ObrasPage() {
   const [loading, setLoading] = useState(true);
   const [empresa, setEmpresa] = useState(null);
   const [obras, setObras] = useState([]);
   const [erro, setErro] = useState(null);
+  const [avisoErro, setAvisoErro] = useState(null);
   const [excluindoId, setExcluindoId] = useState(null);
   const [obraEditando, setObraEditando] = useState(null);
   const [entriesEditando, setEntriesEditando] = useState([]);
+  const [obraParaExcluir, setObraParaExcluir] = useState(null);
 
   async function carregar() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -55,12 +58,17 @@ export default function ObrasPage() {
   const excluirObra = async (e, obraId, nomeObra) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!confirm(`Tem certeza que quer excluir a obra "${nomeObra}"? Isso apaga TODOS os lançamentos e etapas dela. Essa ação não pode ser desfeita.`)) return;
-    setExcluindoId(obraId);
-    const { error } = await supabase.from("obras").delete().eq("id", obraId);
+    setObraParaExcluir({ id: obraId, nome: nomeObra });
+  };
+
+  const confirmarExclusao = async () => {
+    if (!obraParaExcluir) return;
+    setExcluindoId(obraParaExcluir.id);
+    const { error } = await supabase.from("obras").delete().eq("id", obraParaExcluir.id);
     setExcluindoId(null);
+    setObraParaExcluir(null);
     if (error) {
-      alert("Não foi possível excluir a obra: " + error.message);
+      setAvisoErro("Não foi possível excluir a obra: " + error.message);
       return;
     }
     carregar();
@@ -84,7 +92,7 @@ export default function ObrasPage() {
   const salvarEdicao = async (payload) => {
     const { error } = await supabase.from("obras").update(payload).eq("id", obraEditando.id);
     if (error) {
-      alert("Não foi possível salvar: " + error.message);
+      setAvisoErro("Não foi possível salvar: " + error.message);
       return;
     }
     setObraEditando(null);
@@ -138,6 +146,12 @@ export default function ObrasPage() {
         </div>
 
         {erro && <div style={{ background: COLORS.badSoft, color: COLORS.bad, padding: "10px 14px", borderRadius: 8, fontSize: 13 }}>{erro}</div>}
+        {avisoErro && (
+          <div style={{ background: COLORS.badSoft, color: COLORS.bad, padding: "10px 14px", borderRadius: 8, fontSize: 13, marginBottom: 14, display: "flex", justifyContent: "space-between", gap: 10 }}>
+            <span>{avisoErro}</span>
+            <button onClick={() => setAvisoErro(null)} style={{ background: "none", border: "none", color: COLORS.bad, cursor: "pointer", fontWeight: 700 }}>✕</button>
+          </div>
+        )}
 
         {!erro && obras.length === 0 && (
           <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: COLORS.textSoft, fontSize: 13.5 }}>
@@ -199,6 +213,17 @@ export default function ObrasPage() {
           entries={entriesEditando}
           onClose={() => setObraEditando(null)}
           onSave={salvarEdicao}
+        />
+      )}
+
+      {obraParaExcluir && (
+        <ConfirmModal
+          titulo="Excluir obra"
+          mensagem={`Tem certeza que quer excluir "${obraParaExcluir.nome}"? Isso apaga TODOS os lançamentos e etapas dela. Essa ação não pode ser desfeita.`}
+          textoConfirmar="Excluir"
+          confirmando={excluindoId === obraParaExcluir.id}
+          onConfirm={confirmarExclusao}
+          onCancel={() => setObraParaExcluir(null)}
         />
       )}
     </div>

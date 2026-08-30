@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import { COLORS, fmtBRL, STATUS_OBRA_LABEL, OBJETIVO_LABEL, CARD_SHADOW, FONT_MONO } from "../../../../lib/theme";
+import ConfirmModal from "../../../../components/ConfirmModal";
 
 const ETAPAS_PADRAO = [
   { nome: "Terraplanagem / Fundação", pct: 8, ordem: 1 },
@@ -44,6 +45,9 @@ export default function AdminEmpresaDetalhe() {
   const [removendoMembroId, setRemovendoMembroId] = useState(null);
   const [convitesPendentes, setConvitesPendentes] = useState([]);
   const [cancelandoConviteId, setCancelandoConviteId] = useState(null);
+  const [avisoErro, setAvisoErro] = useState(null);
+  const [obraParaExcluir, setObraParaExcluir] = useState(null);
+  const [membroParaRemover, setMembroParaRemover] = useState(null);
 
   async function carregar() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -83,7 +87,7 @@ export default function AdminEmpresaDetalhe() {
     const { error } = await supabase.from("convites").delete().eq("id", conviteId);
     setCancelandoConviteId(null);
     if (error) {
-      alert("Não foi possível cancelar: " + error.message);
+      setAvisoErro("Não foi possível cancelar: " + error.message);
       return;
     }
     carregar();
@@ -187,32 +191,42 @@ export default function AdminEmpresaDetalhe() {
       .eq("id", obraEditando);
     setSalvandoEdicao(false);
     if (error) {
-      alert("Erro ao salvar: " + error.message);
+      setAvisoErro("Erro ao salvar: " + error.message);
       return;
     }
     setObraEditando(null);
     carregar();
   };
 
-  const excluirObra = async (obraId, nomeObra) => {
-    if (!confirm(`Tem certeza que quer excluir a obra "${nomeObra}"? Isso apaga TODOS os lançamentos e etapas dela. Essa ação não pode ser desfeita.`)) return;
-    setExcluindoObraId(obraId);
-    const { error } = await supabase.from("obras").delete().eq("id", obraId);
+  const excluirObra = (obraId, nomeObra) => {
+    setObraParaExcluir({ id: obraId, nome: nomeObra });
+  };
+
+  const confirmarExclusaoObra = async () => {
+    if (!obraParaExcluir) return;
+    setExcluindoObraId(obraParaExcluir.id);
+    const { error } = await supabase.from("obras").delete().eq("id", obraParaExcluir.id);
     setExcluindoObraId(null);
+    setObraParaExcluir(null);
     if (error) {
-      alert("Erro ao excluir: " + error.message);
+      setAvisoErro("Erro ao excluir: " + error.message);
       return;
     }
     carregar();
   };
 
-  const removerMembro = async (userId, nomeMembro) => {
-    if (!confirm(`Remover ${nomeMembro || "este membro"} desta empresa? A conta dele continua existindo, só perde acesso a esta empresa.`)) return;
-    setRemovendoMembroId(userId);
-    const { error } = await supabase.from("usuarios_empresas").delete().eq("user_id", userId).eq("empresa_id", empresaId);
+  const removerMembro = (userId, nomeMembro) => {
+    setMembroParaRemover({ id: userId, nome: nomeMembro });
+  };
+
+  const confirmarRemocaoMembro = async () => {
+    if (!membroParaRemover) return;
+    setRemovendoMembroId(membroParaRemover.id);
+    const { error } = await supabase.from("usuarios_empresas").delete().eq("user_id", membroParaRemover.id).eq("empresa_id", empresaId);
     setRemovendoMembroId(null);
+    setMembroParaRemover(null);
     if (error) {
-      alert("Erro ao remover: " + error.message);
+      setAvisoErro("Erro ao remover: " + error.message);
       return;
     }
     carregar();
@@ -233,6 +247,13 @@ export default function AdminEmpresaDetalhe() {
 
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 16px" }}>
         <div style={{ fontSize: 22, fontWeight: 800, color: COLORS.text, marginBottom: 24 }}>{empresa?.nome}</div>
+
+        {avisoErro && (
+          <div style={{ background: COLORS.badSoft, color: COLORS.bad, padding: "10px 14px", borderRadius: 8, fontSize: 13, marginBottom: 16, display: "flex", justifyContent: "space-between", gap: 10 }}>
+            <span>{avisoErro}</span>
+            <button onClick={() => setAvisoErro(null)} style={{ background: "none", border: "none", color: COLORS.bad, cursor: "pointer", fontWeight: 700 }}>✕</button>
+          </div>
+        )}
 
         {/* MEMBROS */}
         <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 20, marginBottom: 20, boxShadow: CARD_SHADOW }}>
@@ -460,6 +481,28 @@ export default function AdminEmpresaDetalhe() {
           </div>
         </div>
       </div>
+
+      {obraParaExcluir && (
+        <ConfirmModal
+          titulo="Excluir obra"
+          mensagem={`Tem certeza que quer excluir "${obraParaExcluir.nome}"? Isso apaga TODOS os lançamentos e etapas dela. Essa ação não pode ser desfeita.`}
+          textoConfirmar="Excluir"
+          confirmando={excluindoObraId === obraParaExcluir.id}
+          onConfirm={confirmarExclusaoObra}
+          onCancel={() => setObraParaExcluir(null)}
+        />
+      )}
+
+      {membroParaRemover && (
+        <ConfirmModal
+          titulo="Remover membro"
+          mensagem={`Remover ${membroParaRemover.nome || "este membro"} desta empresa? A conta dele continua existindo, só perde acesso a esta empresa.`}
+          textoConfirmar="Remover"
+          confirmando={removendoMembroId === membroParaRemover.id}
+          onConfirm={confirmarRemocaoMembro}
+          onCancel={() => setMembroParaRemover(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { COLORS, CATEGORIA_LABEL } from "../lib/theme";
+import ConfirmModal from "./ConfirmModal";
 
 export default function EditarLancamentoModal({ lancamento, stages, onClose, onSave, onDelete }) {
   const [form, setForm] = useState({
@@ -13,6 +14,7 @@ export default function EditarLancamentoModal({ lancamento, stages, onClose, onS
   });
   const [salvando, setSalvando] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
 
   const inputStyle = { width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 13.5, color: COLORS.text };
   const labelStyle = { fontSize: 11.5, fontWeight: 600, color: COLORS.textSoft, marginBottom: 5, display: "block" };
@@ -25,11 +27,11 @@ export default function EditarLancamentoModal({ lancamento, stages, onClose, onS
     setSalvando(false);
   };
 
-  const excluir = async () => {
-    if (!confirm(`Excluir o lançamento "${form.descricao}" (R$ ${form.valor})? Essa ação não pode ser desfeita.`)) return;
+  const confirmarExclusao = async () => {
     setExcluindo(true);
     await onDelete();
     setExcluindo(false);
+    setConfirmandoExclusao(false);
   };
 
   return (
@@ -91,7 +93,7 @@ export default function EditarLancamentoModal({ lancamento, stages, onClose, onS
         <div style={{ display: "flex", gap: 10 }}>
           <button
             type="button"
-            onClick={excluir}
+            onClick={() => setConfirmandoExclusao(true)}
             disabled={excluindo}
             style={{ padding: "12px 16px", borderRadius: 8, border: `1px solid ${COLORS.badSoft}`, background: COLORS.badSoft, color: COLORS.bad, fontWeight: 700, cursor: "pointer", fontSize: 13 }}
           >
@@ -105,6 +107,17 @@ export default function EditarLancamentoModal({ lancamento, stages, onClose, onS
           </button>
         </div>
       </form>
+
+      {confirmandoExclusao && (
+        <ConfirmModal
+          titulo="Excluir lançamento"
+          mensagem={`Excluir "${form.descricao}" (R$ ${form.valor})? Essa ação não pode ser desfeita.`}
+          textoConfirmar="Excluir"
+          confirmando={excluindo}
+          onConfirm={confirmarExclusao}
+          onCancel={() => setConfirmandoExclusao(false)}
+        />
+      )}
     </div>
   );
 }
