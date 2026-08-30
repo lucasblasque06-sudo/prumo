@@ -1,21 +1,24 @@
 export const metadata = {
-  title: "Prumo — Casa Dona Maria Cândida",
+  title: "Prumo — Controle financeiro de obra",
   description: "Controle financeiro de obra",
   manifest: "/manifest.json",
   robots: "noindex, nofollow",
   icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-192.png",
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Prumo",
   },
 };
 
 export const viewport = {
-  themeColor: "#1E2A32",
+  themeColor: "#0F0A1A",
 };
 
 export default function RootLayout({ children }) {
