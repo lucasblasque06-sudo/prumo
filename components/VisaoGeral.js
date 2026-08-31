@@ -74,6 +74,25 @@ export default function VisaoGeral({ obra, stages, entries }) {
   const vendida = obra?.objetivo === "venda" && obra?.status === "vendida";
   const custoReal = Number(obra?.terreno_valor || 0) + totalGasto;
   const lucroReal = vendida ? Number(obra?.lucro ?? (Number(obra?.valor_liquido || 0) - custoReal)) : 0;
+  const valorVenda = Number(obra?.valor_venda_real || 0);
+  const margemPct = vendida && valorVenda > 0 ? (lucroReal / valorVenda) * 100 : null;
+  const roiPct = vendida && custoReal > 0 ? (lucroReal / custoReal) * 100 : null;
+
+  // Ritmo de gasto: com base na data do primeiro lançamento, projeta quantos dias o saldo ainda dura
+  let ritmo = null;
+  if (!vendida && entries.length >= 2) {
+    const datas = entries.map((e) => new Date(e.data + "T00:00:00")).sort((a, b) => a - b);
+    const primeiraData = datas[0];
+    const hoje = new Date();
+    const diasDecorridos = Math.max(1, Math.round((hoje - primeiraData) / (1000 * 60 * 60 * 24)));
+    if (diasDecorridos >= 3) {
+      const taxaDiaria = totalGasto / diasDecorridos;
+      if (taxaDiaria > 0) {
+        const diasRestantes = disponivel > 0 ? Math.round(disponivel / taxaDiaria) : 0;
+        ritmo = { taxaDiaria, diasRestantes, estourado: disponivel <= 0 };
+      }
+    }
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -85,6 +104,18 @@ export default function VisaoGeral({ obra, stages, entries }) {
             <StatCard label="Terreno" value={fmtBRL(obra?.terreno_valor)} />
             <StatCard label="Comissão" value={fmtBRL(obra?.valor_comissao)} />
             <StatCard label="Lucro real" value={fmtBRL(lucroReal)} sub="terreno + gastos + comissão já descontados" subColor={lucroReal >= 0 ? COLORS.good : COLORS.bad} />
+            <StatCard
+              label="Margem"
+              value={margemPct !== null ? `${margemPct.toFixed(1)}%` : "—"}
+              sub="lucro sobre o valor de venda"
+              subColor={margemPct >= 20 ? COLORS.good : margemPct >= 0 ? COLORS.warn : COLORS.bad}
+            />
+            <StatCard
+              label="ROI"
+              value={roiPct !== null ? `${roiPct.toFixed(1)}%` : "—"}
+              sub="retorno sobre o investido"
+              subColor={roiPct >= 20 ? COLORS.good : roiPct >= 0 ? COLORS.warn : COLORS.bad}
+            />
           </>
         ) : (
           <>
@@ -103,6 +134,25 @@ export default function VisaoGeral({ obra, stages, entries }) {
           </>
         )}
       </div>
+
+      {ritmo && (
+        <div style={{
+          background: ritmo.estourado ? COLORS.badSoft : ritmo.diasRestantes < 30 ? COLORS.warnSoft : COLORS.goodSoft,
+          borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap"
+        }}>
+          <div style={{ fontSize: 22 }}>{ritmo.estourado ? "🔴" : ritmo.diasRestantes < 30 ? "🟡" : "🟢"}</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>
+              Ritmo de gasto: <span style={{ fontFamily: FONT_MONO }}>{fmtBRL(ritmo.taxaDiaria)}/dia</span>
+            </div>
+            <div style={{ fontSize: 12, color: COLORS.textSoft, marginTop: 2 }}>
+              {ritmo.estourado
+                ? "O orçamento já foi ultrapassado no ritmo atual."
+                : `Nesse ritmo, o valor disponível dura mais ~${ritmo.diasRestantes} dias.`}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20 }} className="two-col">
         <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 22, boxShadow: CARD_SHADOW }}>
