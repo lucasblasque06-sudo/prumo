@@ -78,20 +78,11 @@ export default function VisaoGeral({ obra, stages, entries }) {
   const margemPct = vendida && valorVenda > 0 ? (lucroReal / valorVenda) * 100 : null;
   const roiPct = vendida && custoReal > 0 ? (lucroReal / custoReal) * 100 : null;
 
-  // Ritmo de gasto: com base na data do primeiro lançamento, projeta quantos dias o saldo ainda dura
-  let ritmo = null;
-  if (!vendida && entries.length >= 2) {
+  // Dias desde o primeiro lançamento (informação neutra, sem prever nada)
+  let diasEmAndamento = null;
+  if (!vendida && entries.length > 0) {
     const datas = entries.map((e) => new Date(e.data + "T00:00:00")).sort((a, b) => a - b);
-    const primeiraData = datas[0];
-    const hoje = new Date();
-    const diasDecorridos = Math.max(1, Math.round((hoje - primeiraData) / (1000 * 60 * 60 * 24)));
-    if (diasDecorridos >= 3) {
-      const taxaDiaria = totalGasto / diasDecorridos;
-      if (taxaDiaria > 0) {
-        const diasRestantes = disponivel > 0 ? Math.round(disponivel / taxaDiaria) : 0;
-        ritmo = { taxaDiaria, diasRestantes, estourado: disponivel <= 0 };
-      }
-    }
+    diasEmAndamento = Math.max(0, Math.round((new Date() - datas[0]) / (1000 * 60 * 60 * 24)));
   }
 
   return (
@@ -135,22 +126,9 @@ export default function VisaoGeral({ obra, stages, entries }) {
         )}
       </div>
 
-      {ritmo && (
-        <div style={{
-          background: ritmo.estourado ? COLORS.badSoft : ritmo.diasRestantes < 30 ? COLORS.warnSoft : COLORS.goodSoft,
-          borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap"
-        }}>
-          <div style={{ fontSize: 22 }}>{ritmo.estourado ? "🔴" : ritmo.diasRestantes < 30 ? "🟡" : "🟢"}</div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>
-              Ritmo de gasto: <span style={{ fontFamily: FONT_MONO }}>{fmtBRL(ritmo.taxaDiaria)}/dia</span>
-            </div>
-            <div style={{ fontSize: 12, color: COLORS.textSoft, marginTop: 2 }}>
-              {ritmo.estourado
-                ? "O orçamento já foi ultrapassado no ritmo atual."
-                : `Nesse ritmo, o valor disponível dura mais ~${ritmo.diasRestantes} dias.`}
-            </div>
-          </div>
+      {diasEmAndamento !== null && (
+        <div style={{ fontSize: 12, color: COLORS.textSoft, marginTop: -12 }}>
+          🕐 Obra em andamento há {diasEmAndamento} {diasEmAndamento === 1 ? "dia" : "dias"} (desde o primeiro lançamento) · gasto médio de {fmtBRL(diasEmAndamento > 0 ? totalGasto / diasEmAndamento : totalGasto)}/dia
         </div>
       )}
 
