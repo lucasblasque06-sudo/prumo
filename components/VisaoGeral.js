@@ -15,10 +15,10 @@ const CATEGORIA_CORES = {
 
 function StatCard({ label, value, sub, subColor }) {
   return (
-    <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "14px 16px", boxShadow: CARD_SHADOW, height: "100%", display: "flex", flexDirection: "column" }}>
-      <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textSoft, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</div>
-      <div style={{ fontSize: 19, fontWeight: 700, color: COLORS.text, marginTop: 5, fontFamily: FONT_MONO, letterSpacing: -0.5 }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: subColor || COLORS.textSoft, marginTop: 3, fontWeight: 600, lineHeight: 1.35 }}>{sub}</div>}
+    <div style={{ background: COLORS.paper, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "12px 12px", boxShadow: CARD_SHADOW, height: "100%", display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: COLORS.textSoft, textTransform: "uppercase", letterSpacing: 0.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</div>
+      <div style={{ fontSize: "clamp(13px, 4vw, 18px)", fontWeight: 700, color: COLORS.text, marginTop: 5, fontFamily: FONT_MONO, letterSpacing: -0.3, whiteSpace: "nowrap" }}>{value}</div>
+      {sub && <div style={{ fontSize: 10.5, color: subColor || COLORS.textSoft, marginTop: 3, fontWeight: 600, lineHeight: 1.35 }}>{sub}</div>}
     </div>
   );
 }
@@ -87,7 +87,7 @@ export default function VisaoGeral({ obra, stages, entries }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, alignItems: "stretch" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(155px, 1fr))", gap: 10, alignItems: "stretch" }}>
         {vendida ? (
           <>
             <StatCard label="Valor da venda" value={fmtBRL(obra?.valor_venda_real)} subColor={COLORS.good} />
